@@ -8,7 +8,8 @@ import kotlinx.coroutines.launch
 enum class SignalingMessageType(val value: Int) {
     OFFER(10),
     ANSWER(11),
-    ICE_CANDIDATE(12);
+    ICE_CANDIDATE(12),
+    ;
 
     companion object {
         fun fromValue(v: Int): SignalingMessageType =
@@ -21,20 +22,21 @@ data class SignalingPayload(
     val type: SignalingMessageType,
     val data: String,
     val sdpMid: String = "",
-    val sdpMLineIndex: Int = 0
+    val sdpMLineIndex: Int = 0,
 ) {
     fun toWireMessage(peerId: String): WireMessage {
-        val payload = buildString {
-            append(type.value)
-            append("|")
-            append(data.length)
-            append("|")
-            append(data)
-            if (type == SignalingMessageType.ICE_CANDIDATE) {
-                append("|").append(sdpMid)
-                append("|").append(sdpMLineIndex)
-            }
-        }.toByteArray()
+        val payload =
+            buildString {
+                append(type.value)
+                append("|")
+                append(data.length)
+                append("|")
+                append(data)
+                if (type == SignalingMessageType.ICE_CANDIDATE) {
+                    append("|").append(sdpMid)
+                    append("|").append(sdpMLineIndex)
+                }
+            }.toByteArray()
         return WireMessage(MessageType.PREKEY_BUNDLE, peerId, payload)
     }
 
@@ -52,13 +54,14 @@ data class SignalingPayload(
                 } else {
                     SignalingPayload(type, data)
                 }
-            } catch (_: Exception) { null }
+            } catch (_: Exception) {
+                null
+            }
         }
     }
 }
 
 class WebRTCSignaling(private val webRTCManager: WebRTCManager) {
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     fun startListening(connectionManager: ConnectionManager) {
@@ -81,11 +84,17 @@ class WebRTCSignaling(private val webRTCManager: WebRTCManager) {
         }
     }
 
-    fun initiateConnection(peerId: String, connectionManager: ConnectionManager) {
+    fun initiateConnection(
+        peerId: String,
+        connectionManager: ConnectionManager,
+    ) {
         webRTCManager.createOffer(createCallback(peerId, connectionManager))
     }
 
-    private fun createCallback(peerId: String, cm: ConnectionManager): WebRTCManager.SignalingCallback {
+    private fun createCallback(
+        peerId: String,
+        cm: ConnectionManager,
+    ): WebRTCManager.SignalingCallback {
         return object : WebRTCManager.SignalingCallback {
             override fun onOfferCreated(sdp: String) {
                 val payload = SignalingPayload(SignalingMessageType.OFFER, sdp)
@@ -97,10 +106,18 @@ class WebRTCSignaling(private val webRTCManager: WebRTCManager) {
                 scope.launch { cm.send(peerId, payload.toWireMessage(peerId)) }
             }
 
-            override fun onIceCandidateGenerated(candidate: String, sdpMid: String, sdpMLineIndex: Int) {
-                val payload = SignalingPayload(
-                    SignalingMessageType.ICE_CANDIDATE, candidate, sdpMid, sdpMLineIndex
-                )
+            override fun onIceCandidateGenerated(
+                candidate: String,
+                sdpMid: String,
+                sdpMLineIndex: Int,
+            ) {
+                val payload =
+                    SignalingPayload(
+                        SignalingMessageType.ICE_CANDIDATE,
+                        candidate,
+                        sdpMid,
+                        sdpMLineIndex,
+                    )
                 scope.launch { cm.send(peerId, payload.toWireMessage(peerId)) }
             }
         }

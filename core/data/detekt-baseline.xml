@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MaxLineLength:ContactRepositoryTest.kt$FakeContactDao$override suspend fun getByPublicKey(publicKey: ByteArray): ContactEntity?</ID>
+  </CurrentIssues>
+</SmellBaseline>

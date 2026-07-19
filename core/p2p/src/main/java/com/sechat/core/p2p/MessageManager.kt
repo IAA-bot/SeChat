@@ -31,14 +31,15 @@ data class ChatMessage(
     val isEncrypted: Boolean = true,
 )
 
-fun StoredMessage.toChatMessage(): ChatMessage = ChatMessage(
-    id = "${sessionId}-$id",
-    senderId = sender,
-    text = "\uD83D\uDD12 Encrypted message",
-    timestamp = timestamp,
-    isSent = isSent,
-    isEncrypted = true,
-)
+fun StoredMessage.toChatMessage(): ChatMessage =
+    ChatMessage(
+        id = "$sessionId-$id",
+        senderId = sender,
+        text = "\uD83D\uDD12 Encrypted message",
+        timestamp = timestamp,
+        isSent = isSent,
+        isEncrypted = true,
+    )
 
 data class OutboxEntry(
     val peerId: String,
@@ -63,12 +64,13 @@ class MessageManager(
     private val liveMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
     private val outbox = mutableListOf<OutboxEntry>()
 
-    val messages: StateFlow<List<ChatMessage>> = combine(
-        messageRepository.allStoredMessages(),
-        liveMessages,
-    ) { stored, live ->
-        stored.map { it.toChatMessage() } + live
-    }.stateIn(scope, SharingStarted.Lazily, emptyList())
+    val messages: StateFlow<List<ChatMessage>> =
+        combine(
+            messageRepository.allStoredMessages(),
+            liveMessages,
+        ) { stored, live ->
+            stored.map { it.toChatMessage() } + live
+        }.stateIn(scope, SharingStarted.Lazily, emptyList())
 
     fun startListening() {
         scope.launch {
@@ -98,52 +100,69 @@ class MessageManager(
         }
     }
 
-    fun establishSession(peerId: String, remotePublicKey: PublicKey) {
+    fun establishSession(
+        peerId: String,
+        remotePublicKey: PublicKey,
+    ) {
         val identity = identityManager.getKeyPair() ?: return
         val session = sessionCipher.createSenderSession(identity.keyPair, remotePublicKey)
         sessions[peerId] = session
         scope.launch {
             connectionManager.send(
-                peerId, WireMessage(MessageType.SESSION_SETUP, peerId, identity.publicKeyRaw),
+                peerId,
+                WireMessage(MessageType.SESSION_SETUP, peerId, identity.publicKeyRaw),
             )
         }
     }
 
-    fun sendMessage(peerId: String, text: String) {
+    fun sendMessage(
+        peerId: String,
+        text: String,
+    ) {
         val session = sessions[peerId] ?: return
         val identity = identityManager.getKeyPair() ?: return
         val encrypted = session.encrypt(text.toByteArray(Charsets.UTF_8))
         val payload = serializePayload(encrypted)
         scope.launch {
-            val sent = connectionManager.send(
-                peerId, WireMessage(MessageType.CIPHERTEXT, peerId, payload),
-            )
+            val sent =
+                connectionManager.send(
+                    peerId,
+                    WireMessage(MessageType.CIPHERTEXT, peerId, payload),
+                )
             if (sent) {
                 messageRepository.saveMessage(
-                    peerId, identity.fingerprint, encrypted.ciphertext, true,
+                    peerId,
+                    identity.fingerprint,
+                    encrypted.ciphertext,
+                    true,
                 )
-                liveMessages.value = liveMessages.value + ChatMessage(
-                    id = "${peerId}-sent-${System.currentTimeMillis()}",
-                    senderId = peerId, text = text,
-                    timestamp = System.currentTimeMillis(), isSent = true,
-                )
+                liveMessages.value = liveMessages.value +
+                    ChatMessage(
+                        id = "$peerId-sent-${System.currentTimeMillis()}",
+                        senderId = peerId, text = text,
+                        timestamp = System.currentTimeMillis(), isSent = true,
+                    )
             } else {
                 enqueueRetry(peerId, text)
             }
         }
     }
 
-    private fun enqueueRetry(peerId: String, text: String) {
+    private fun enqueueRetry(
+        peerId: String,
+        text: String,
+    ) {
         val existing = outbox.find { it.peerId == peerId && it.text == text }
         if (existing != null) return
 
         val entry = OutboxEntry(peerId, text)
         outbox.add(entry)
-        liveMessages.value = liveMessages.value + ChatMessage(
-            id = "${peerId}-pending-${System.currentTimeMillis()}",
-            senderId = peerId, text = text,
-            timestamp = System.currentTimeMillis(), isSent = true,
-        )
+        liveMessages.value = liveMessages.value +
+            ChatMessage(
+                id = "$peerId-pending-${System.currentTimeMillis()}",
+                senderId = peerId, text = text,
+                timestamp = System.currentTimeMillis(), isSent = true,
+            )
         scheduleRetry(entry)
     }
 
@@ -172,7 +191,9 @@ class MessageManager(
             val kf = KeyFactory.getInstance("EC")
             val remote = kf.generatePublic(X509EncodedKeySpec(msg.payload))
             sessionCipher.createReceiverSession(identity.keyPair, remote)
-        } catch (_: Exception) { null }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun decryptAndSave(msg: WireMessage) {
@@ -180,20 +201,24 @@ class MessageManager(
         try {
             val (ct, iv, counter) = deserializePayload(msg.payload)
             val text = String(session.decrypt(ct, iv, counter), Charsets.UTF_8)
-            liveMessages.value = liveMessages.value + ChatMessage(
-                id = "${msg.senderId}-$counter",
-                senderId = msg.senderId, text = text,
-                timestamp = System.currentTimeMillis(), isSent = false,
-            )
-        } catch (_: Exception) { }
+            liveMessages.value = liveMessages.value +
+                ChatMessage(
+                    id = "${msg.senderId}-$counter",
+                    senderId = msg.senderId, text = text,
+                    timestamp = System.currentTimeMillis(), isSent = false,
+                )
+        } catch (_: Exception) {
+        }
     }
 
     private fun serializePayload(ct: SessionCipher.CipherText): ByteArray {
         val baos = ByteArrayOutputStream()
         DataOutputStream(baos).use { dos ->
             dos.writeLong(ct.messageCounter)
-            dos.writeInt(ct.iv.size); dos.write(ct.iv)
-            dos.writeInt(ct.ciphertext.size); dos.write(ct.ciphertext)
+            dos.writeInt(ct.iv.size)
+            dos.write(ct.iv)
+            dos.writeInt(ct.ciphertext.size)
+            dos.write(ct.ciphertext)
         }
         return baos.toByteArray()
     }

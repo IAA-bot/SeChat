@@ -3,13 +3,22 @@
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
     <ID>FunctionNaming:SeChatNavHost.kt$@Composable fun SeChatNavHost()</ID>
-    <ID>FunctionNaming:SeChatTheme.kt$@Composable fun SeChatTheme(content: @Composable () -&gt; Unit)</ID>
+    <ID>FunctionNaming:SeChatTheme.kt$@Composable fun SeChatTheme( darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -&gt; Unit, )</ID>
     <ID>InvalidPackageDeclaration:AppModule.kt$package com.sechat.app</ID>
     <ID>MagicNumber:SeChatTheme.kt$0xFF000000</ID>
     <ID>MagicNumber:SeChatTheme.kt$0xFF007AFF</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF0A84FF</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF121212</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF1E1E1E</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF2C2C2C</ID>
     <ID>MagicNumber:SeChatTheme.kt$0xFF4CAF50</ID>
     <ID>MagicNumber:SeChatTheme.kt$0xFF666666</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF66BB6A</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF777777</ID>
     <ID>MagicNumber:SeChatTheme.kt$0xFF999999</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFFAAAAAA</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFFE0E0E0</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFFEF5350</ID>
     <ID>MagicNumber:SeChatTheme.kt$0xFFF44336</ID>
     <ID>MagicNumber:SeChatTheme.kt$0xFFF5F5F5</ID>
     <ID>MatchingDeclarationName:SeChatNavHost.kt$SeChatRoutes</ID>

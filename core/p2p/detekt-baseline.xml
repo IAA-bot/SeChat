@@ -4,22 +4,25 @@
   <CurrentIssues>
     <ID>EmptyFunctionBlock:DiscoveryEngine.kt$DiscoveryEngine.&lt;no name provided&gt;${ }</ID>
     <ID>EmptyFunctionBlock:TorProxyManager.kt$TorProxyManager.&lt;no name provided&gt;${ }</ID>
-    <ID>EmptyFunctionBlock:WebRTCManager.kt$WebRTCManager.&lt;no name provided&gt;${ }</ID>
+    <ID>EmptyFunctionBlock:WebRTCManager.kt$WebRTCManager.&lt;no name provided&gt;${}</ID>
+    <ID>EmptyFunctionBlock:WebRTCManager.kt$WebRTCManager.&lt;no name provided&gt;.&lt;no name provided&gt;${}</ID>
+    <ID>EmptyFunctionBlock:WebRTCManager.kt$WebRTCManager.&lt;no name provided&gt;.&lt;no name provided&gt;.&lt;no name provided&gt;${}</ID>
     <ID>LoopWithTooManyJumpStatements:ConnectionManager.kt$ConnectionManager$while</ID>
+    <ID>LoopWithTooManyJumpStatements:WebRTCSignaling.kt$WebRTCSignaling$for</ID>
     <ID>MagicNumber:ConnectionManager.kt$ConnectionManager$5000</ID>
     <ID>MagicNumber:ConnectionManager.kt$MessageStreamReader$1024</ID>
     <ID>MagicNumber:ConnectionManager.kt$MessageStreamReader$4</ID>
     <ID>MagicNumber:MessageProtocol.kt$MessageType.PING$4</ID>
     <ID>MagicNumber:MessageProtocol.kt$MessageType.PONG$5</ID>
     <ID>MagicNumber:MessageProtocol.kt$MessageType.SESSION_SETUP$3</ID>
+    <ID>MagicNumber:WebRTCSignaling.kt$SignalingMessageType.ANSWER$11</ID>
+    <ID>MagicNumber:WebRTCSignaling.kt$SignalingMessageType.ICE_CANDIDATE$12</ID>
+    <ID>MagicNumber:WebRTCSignaling.kt$SignalingMessageType.OFFER$10</ID>
     <ID>ReturnCount:ConnectionManager.kt$MessageStreamReader$fun readMessage(): WireMessage?</ID>
     <ID>SwallowedException:ConnectionManager.kt$ConnectionManager$e: Exception</ID>
-    <ID>SwallowedException:WebRTCManager.kt$WebRTCManager$e: Exception</ID>
     <ID>TooGenericExceptionCaught:ConnectionManager.kt$ConnectionManager$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:WebRTCManager.kt$WebRTCManager$e: Exception</ID>
-    <ID>UnusedParameter:WebRTCManager.kt$WebRTCManager$peerId: String</ID>
+    <ID>TooManyFunctions:WebRTCManager.kt$WebRTCManager</ID>
     <ID>UnusedPrivateProperty:TransportManager.kt$TransportManager$private val context: Context</ID>
     <ID>UnusedPrivateProperty:TransportManager.kt$TransportManager$private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)</ID>
-    <ID>UnusedPrivateProperty:WebRTCManager.kt$WebRTCManager$val constraints = MediaConstraints().apply { optional.add(MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true")) }</ID>
   </CurrentIssues>
 </SmellBaseline>

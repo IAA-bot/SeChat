@@ -22,6 +22,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Auto-format (ktlint)
+        run: ./gradlew ktlintFormat
+
       - name: Format check (ktlint)
         run: ./gradlew ktlintCheck
 

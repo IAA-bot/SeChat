@@ -26,32 +26,34 @@ internal val DarkTextPrimary = Color(0xFFE0E0E0)
 internal val DarkTextSecondary = Color(0xFFAAAAAA)
 internal val DarkTextHint = Color(0xFF777777)
 
-private val LightColorScheme = lightColorScheme(
-    primary = PrimaryBlue,
-    onPrimary = White,
-    primaryContainer = PrimaryBlue.copy(alpha = 0.12f),
-    secondary = SecureGreen,
-    error = ErrorRed,
-    background = White,
-    surface = SurfaceGray,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    outline = TextHint,
-)
+private val LightColorScheme =
+    lightColorScheme(
+        primary = PrimaryBlue,
+        onPrimary = White,
+        primaryContainer = PrimaryBlue.copy(alpha = 0.12f),
+        secondary = SecureGreen,
+        error = ErrorRed,
+        background = White,
+        surface = SurfaceGray,
+        onBackground = TextPrimary,
+        onSurface = TextPrimary,
+        outline = TextHint,
+    )
 
-private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryBlueDark,
-    onPrimary = DarkBackground,
-    primaryContainer = PrimaryBlueDark.copy(alpha = 0.24f),
-    secondary = SecureGreenDark,
-    error = ErrorRedDark,
-    background = DarkBackground,
-    surface = DarkSurface,
-    surfaceVariant = DarkSurfaceVariant,
-    onBackground = DarkTextPrimary,
-    onSurface = DarkTextPrimary,
-    outline = DarkTextHint,
-)
+private val DarkColorScheme =
+    darkColorScheme(
+        primary = PrimaryBlueDark,
+        onPrimary = DarkBackground,
+        primaryContainer = PrimaryBlueDark.copy(alpha = 0.24f),
+        secondary = SecureGreenDark,
+        error = ErrorRedDark,
+        background = DarkBackground,
+        surface = DarkSurface,
+        surfaceVariant = DarkSurfaceVariant,
+        onBackground = DarkTextPrimary,
+        onSurface = DarkTextPrimary,
+        outline = DarkTextHint,
+    )
 
 @Composable
 fun SeChatTheme(

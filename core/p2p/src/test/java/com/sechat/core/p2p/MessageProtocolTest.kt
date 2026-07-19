@@ -6,14 +6,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MessageProtocolTest {
-
     @Test
     fun `wire message serialization roundtrip`() {
-        val original = WireMessage(
-            type = MessageType.CIPHERTEXT,
-            senderId = "alice",
-            payload = byteArrayOf(0x01, 0x02, 0x03)
-        )
+        val original =
+            WireMessage(
+                type = MessageType.CIPHERTEXT,
+                senderId = "alice",
+                payload = byteArrayOf(0x01, 0x02, 0x03),
+            )
 
         val data = original.serialize()
         val restored = WireMessage.deserialize(data)
@@ -25,11 +25,12 @@ class MessageProtocolTest {
 
     @Test
     fun `session setup message serialization`() {
-        val original = WireMessage(
-            type = MessageType.SESSION_SETUP,
-            senderId = "bob",
-            payload = ByteArray(32) { it.toByte() }
-        )
+        val original =
+            WireMessage(
+                type = MessageType.SESSION_SETUP,
+                senderId = "bob",
+                payload = ByteArray(32) { it.toByte() },
+            )
 
         val restored = WireMessage.deserialize(original.serialize())
 
@@ -69,11 +70,12 @@ class MessageProtocolTest {
 
     @Test
     fun `sender id with special characters`() {
-        val msg = WireMessage(
-            type = MessageType.CIPHERTEXT,
-            senderId = "user@device:123",
-            payload = byteArrayOf()
-        )
+        val msg =
+            WireMessage(
+                type = MessageType.CIPHERTEXT,
+                senderId = "user@device:123",
+                payload = byteArrayOf(),
+            )
         val restored = WireMessage.deserialize(msg.serialize())
         assertEquals("user@device:123", restored.senderId)
     }

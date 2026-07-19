@@ -1,13 +1,11 @@
 package com.sechat.core.crypto
 
 import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.security.KeyPairGenerator
 
 class SessionCipherTest {
-
     private val cipher = SessionCipher()
     private val keyGen = KeyPairGenerator.getInstance("EC").apply { initialize(256) }
 

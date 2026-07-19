@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 enum class TransportMode { TCP_LAN, WEBRTC, TOR }
 
@@ -18,6 +19,7 @@ class TransportManager(
     val torManager: TorProxyManager,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var signaling: WebRTCSignaling? = null
 
     private var currentMode = TransportMode.TCP_LAN
 
@@ -35,11 +37,11 @@ class TransportManager(
         disconnect()
         currentMode = mode
         when (mode) {
-            TransportMode.TCP_LAN -> {
-                tcpManager.startListening()
-            }
+            TransportMode.TCP_LAN -> tcpManager.startListening()
             TransportMode.WEBRTC -> {
                 webRTCManager.initialize()
+                signaling = WebRTCSignaling(webRTCManager)
+                signaling?.startListening(tcpManager)
             }
             TransportMode.TOR -> {
                 if (torManager.isOrbotInstalled()) {
@@ -58,7 +60,8 @@ class TransportManager(
         return when (currentMode) {
             TransportMode.TCP_LAN -> tcpManager.connect(peerId, host, port)
             TransportMode.WEBRTC -> {
-                webRTCManager.connect(peerId)
+                val connected = tcpManager.connect(peerId, host, port)
+                if (connected) signaling?.initiateConnection(peerId, tcpManager)
                 true
             }
             TransportMode.TOR -> {
@@ -74,7 +77,11 @@ class TransportManager(
     ): Boolean {
         return when (currentMode) {
             TransportMode.TCP_LAN, TransportMode.TOR -> tcpManager.send(peerId, message)
-            TransportMode.WEBRTC -> webRTCManager.send(message)
+            TransportMode.WEBRTC -> {
+                val sent = webRTCManager.send(message)
+                if (!sent) tcpManager.send(peerId, message)
+                true
+            }
         }
     }
 

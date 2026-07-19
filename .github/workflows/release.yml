@@ -5,6 +5,9 @@ on:
     tags:
       - "v*.*.*.*"
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -21,8 +24,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Restore release keystore
-        id: keystore
+      - name: Restore keystore and set signing env
         run: |
           if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > /tmp/sechat-release.jks
@@ -30,20 +32,17 @@ jobs:
             echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
             echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
             echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
-            echo "signed=true" >> $GITHUB_OUTPUT
-          else
-            echo "No keystore secrets found — building unsigned APK"
-            echo "signed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build release APK
+      - name: Build signed release APK
         run: ./gradlew assembleRelease
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: SeChat ${{ github.ref_name }}
-          body_path: CHANGELOG.md
-          files: |
-            app/build/outputs/apk/release/app-arm64-v8a-release.apk
-          fail_on_unmatched_files: false
+      - name: Upload APK to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "SeChat $GITHUB_REF_NAME" \
+            --notes "$(head -40 CHANGELOG.md)" \
+            app/build/outputs/apk/release/app-*-release*.apk \
+            --repo "$GITHUB_REPOSITORY" || true

@@ -2,16 +2,8 @@
 
 ## Phase 2 (post-MVP)
 
-**Priority:** P0
-- [ ] Google WebRTC `com.infobip:google-webrtc` — enable actual STUN hole punching (currently scaffolded)
-
-**Priority:** P1
-- [ ] Notification channel + foreground service for background message delivery
-- [ ] Message send failure retry mechanism (queue failed sends, retry on reconnect)
-
 **Priority:** P2
 - [ ] Fingerprint verification UI (compare identity fingerprints via QR for MITM detection)
-- [ ] Offline message queue (store-and-forward when peer is unreachable)
 - [ ] TURN relay server deployment (fallback when STUN fails)
 
 ## Completed
@@ -20,5 +12,10 @@
   - Anonymous Ed25519 identity, QR scan, mDNS discovery
   - E2EE (ECDH + AES-256-GCM + HKDF)
   - TCP P2P messaging with Room + sqlcipher storage
-  - WebRTC + Tor framework scaffolded
+  - WebRTC + Tor framework, STUN hole punching
+  - Foreground service + notification permission
+  - Message retry queue (outbox + backoff + auto-flush)
+  - Dark theme (system-follow)
+  - Release signing (15MB APK, R8 optimized)
+  - ktlint + detekt + Android Lint
   - Compose UI: identity, contacts, chat, scanner

@@ -26,6 +26,8 @@
 - Settings.gradle.kts: corrected `dependencyResolution` → `dependencyResolutionManagement`
 - Gradle wrapper added for build reproducibility
 - compose-bom 2024.01.00 for Material3 stability
+- Light theme → full dark/light theme switch (follows system setting)
+- Debug APK 31MB → Release APK 15MB (R8 + resource shrinking)
 
 ### Fixed
 - Compose BOM version conflict causing `NoSuchMethodError` on startup

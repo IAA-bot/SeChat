@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -43,13 +45,15 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sechat.core.crypto.IdentityManager
+import com.sechat.core.crypto.QrCodeEncoder
 import com.sechat.core.p2p.ConnectionManager
 import com.sechat.core.p2p.ConnectionState
 import org.koin.java.KoinJavaComponent.get
 
 @Composable
 fun IdentityScreen(
-    onNavigateToContacts: () -> Unit
+    onNavigateToContacts: () -> Unit,
+    onNavigateToScanner: () -> Unit
 ) {
     val context = LocalContext.current
     val identityManager = remember { get<IdentityManager>(IdentityManager::class.java) }
@@ -73,7 +77,15 @@ fun IdentityScreen(
         try {
             val identity = identityManager.getKeyPair()
             if (identity != null) {
-                state = IdentityUiState.Ready(identity.publicKeyRaw, identity.fingerprint)
+                val qrBitmap = QrCodeEncoder.encode(
+                    identity.publicKeyRaw,
+                    identity.fingerprint
+                )
+                state = IdentityUiState.Ready(
+                    publicKeyRaw = identity.publicKeyRaw,
+                    fingerprint = identity.fingerprint,
+                    qrBitmap = qrBitmap
+                )
             } else {
                 state = IdentityUiState.NotCreated
             }
@@ -121,7 +133,15 @@ fun IdentityScreen(
                     state = IdentityUiState.Loading
                     try {
                         val identity = identityManager.generateIdentity()
-                        state = IdentityUiState.Ready(identity.publicKeyRaw, identity.fingerprint)
+                        val qrBitmap = QrCodeEncoder.encode(
+                            identity.publicKeyRaw,
+                            identity.fingerprint
+                        )
+                        state = IdentityUiState.Ready(
+                            publicKeyRaw = identity.publicKeyRaw,
+                            fingerprint = identity.fingerprint,
+                            qrBitmap = qrBitmap
+                        )
                     } catch (e: Exception) {
                         state = IdentityUiState.Error(e.message ?: "Failed to create identity")
                     }
@@ -148,19 +168,13 @@ fun IdentityScreen(
                         )
                         Spacer(Modifier.height(16.dp))
 
-                        Box(
+                        Image(
+                            bitmap = s.qrBitmap.asImageBitmap(),
+                            contentDescription = "Identity QR Code",
                             modifier = Modifier
-                                .size(180.dp)
+                                .size(200.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "QR Code",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                            )
-                        }
+                        )
 
                         Spacer(Modifier.height(12.dp))
                         Text(
@@ -191,7 +205,9 @@ fun IdentityScreen(
                     }
                     OutlinedButton(
                         onClick = {
-                            if (!cameraGranted) {
+                            if (cameraGranted) {
+                                onNavigateToScanner()
+                            } else {
                                 cameraLauncher.launch(Manifest.permission.CAMERA)
                             }
                         },
@@ -249,6 +265,10 @@ private fun ConnectionStatusBar(state: ConnectionState) {
 sealed class IdentityUiState {
     data object Loading : IdentityUiState()
     data object NotCreated : IdentityUiState()
-    data class Ready(val publicKeyRaw: ByteArray, val fingerprint: String) : IdentityUiState()
+    data class Ready(
+        val publicKeyRaw: ByteArray,
+        val fingerprint: String,
+        val qrBitmap: android.graphics.Bitmap
+    ) : IdentityUiState()
     data class Error(val message: String) : IdentityUiState()
 }

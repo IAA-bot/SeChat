@@ -27,6 +27,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("io.insert-koin:koin-core:3.5.3")
+    implementation("com.google.zxing:core:3.5.2")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

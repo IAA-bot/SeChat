@@ -7,12 +7,13 @@ import androidx.navigation.compose.rememberNavController
 import com.sechat.feature.contacts.ContactsScreen
 import com.sechat.feature.identity.IdentityScreen
 import com.sechat.feature.chat.ChatScreen
+import com.sechat.feature.identity.ScannerScreen
 
 object SeChatRoutes {
     const val IDENTITY = "identity"
+    const val SCANNER = "scanner"
     const val CONTACTS = "contacts"
     const val CHAT = "chat/{contactId}"
-    const val SETTINGS = "settings"
 
     fun chatRoute(contactId: String) = "chat/$contactId"
 }
@@ -27,7 +28,18 @@ fun SeChatNavHost() {
     ) {
         composable(SeChatRoutes.IDENTITY) {
             IdentityScreen(
-                onNavigateToContacts = { navController.navigate(SeChatRoutes.CONTACTS) }
+                onNavigateToContacts = { navController.navigate(SeChatRoutes.CONTACTS) },
+                onNavigateToScanner = { navController.navigate(SeChatRoutes.SCANNER) }
+            )
+        }
+
+        composable(SeChatRoutes.SCANNER) {
+            ScannerScreen(
+                onPeerScanned = { publicKeyHex, fingerprint ->
+                    navController.popBackStack()
+                    navController.navigate(SeChatRoutes.CONTACTS)
+                },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

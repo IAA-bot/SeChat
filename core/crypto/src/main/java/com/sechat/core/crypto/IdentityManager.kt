@@ -1,55 +1,51 @@
 package com.sechat.core.crypto
 
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
 import java.security.KeyPair
 import java.security.KeyPairGenerator
-import java.security.KeyStore
-import java.security.PrivateKey
-import java.security.PublicKey
+import java.security.MessageDigest
+import java.security.SecureRandom
 
 class IdentityManager {
 
-    private val keyStoreAlias = "sechat_identity_key"
+    private var currentIdentity: SechatIdentity? = null
 
-    fun generateIdentity(): KeyPair {
-        val generator = KeyPairGenerator.getInstance(
-            KeyProperties.KEY_ALGORITHM_ED25519,
-            "AndroidKeyStore"
-        )
-        val spec = KeyGenParameterSpec.Builder(
-            keyStoreAlias,
-            KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
-        )
-            .setDigests(KeyProperties.DIGEST_SHA256)
-            .build()
-        generator.initialize(spec)
-        return generator.generateKeyPair()
+    data class SechatIdentity(
+        val keyPair: KeyPair,
+        val publicKeyRaw: ByteArray,
+        val fingerprint: String
+    )
+
+    fun generateIdentity(): SechatIdentity {
+        val generator = KeyPairGenerator.getInstance(EC_ALGORITHM)
+        generator.initialize(EC_KEY_SIZE, SecureRandom())
+        val keyPair = generator.generateKeyPair()
+        val raw = keyPair.public.encoded
+        val fp = fingerprint(raw)
+        return SechatIdentity(keyPair, raw, fp).also { currentIdentity = it }
     }
 
-    fun getKeyPair(): KeyPair? {
-        val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        val entry = keyStore.getEntry(keyStoreAlias, null) as? KeyStore.PrivateKeyEntry
-            ?: return null
-        return KeyPair(entry.certificate.publicKey, entry.privateKey)
+    fun getKeyPair(): SechatIdentity? = currentIdentity
+
+    fun hasIdentity(): Boolean = currentIdentity != null
+
+    fun deleteIdentity() { currentIdentity = null }
+
+    fun verifyFingerprint(rawKey: ByteArray, expectedFingerprint: String): Boolean {
+        return fingerprint(rawKey) == expectedFingerprint
     }
 
-    fun getPublicKey(): PublicKey? = getKeyPair()?.public
-    fun getPrivateKey(): PrivateKey? = getKeyPair()?.private
+    companion object {
+        const val EC_ALGORITHM = "EC"
+        const val EC_KEY_SIZE = 256
+        const val FINGERPRINT_LENGTH = 8
 
-    fun hasIdentity(): Boolean {
-        val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        return keyStore.containsAlias(keyStoreAlias)
-    }
+        fun fingerprint(rawKey: ByteArray): String {
+            val hash = MessageDigest.getInstance("SHA-256").digest(rawKey)
+            return hash.take(FINGERPRINT_LENGTH).joinToString("") { "%02x".format(it) }
+        }
 
-    fun deleteIdentity() {
-        val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        keyStore.deleteEntry(keyStoreAlias)
-    }
-
-    fun getFingerprint(publicKey: PublicKey): String {
-        val digest = java.security.MessageDigest.getInstance("SHA-256")
-        val hash = digest.digest(publicKey.encoded)
-        return hash.take(8).joinToString("") { "%02x".format(it) }
+        fun fingerprintDisplay(rawKey: ByteArray): String {
+            return fingerprint(rawKey).chunked(4).joinToString(" ")
+        }
     }
 }

@@ -1,7 +1,14 @@
 package com.sechat.feature.identity
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,11 +16,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,30 +34,54 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sechat.core.crypto.IdentityManager
+import com.sechat.core.p2p.ConnectionManager
+import com.sechat.core.p2p.ConnectionState
+import org.koin.java.KoinJavaComponent.get
 
 @Composable
 fun IdentityScreen(
     onNavigateToContacts: () -> Unit
 ) {
-    val identityManager = remember { IdentityManager() }
-    var state by remember { mutableStateOf<IdentityState>(IdentityState.Loading) }
+    val context = LocalContext.current
+    val identityManager = remember { get<IdentityManager>(IdentityManager::class.java) }
+    val connectionManager = remember { get<ConnectionManager>(ConnectionManager::class.java) }
+    val connectionState by connectionManager.state.collectAsStateWithLifecycle(
+        initialValue = ConnectionState.DISCONNECTED
+    )
+
+    var state by remember { mutableStateOf<IdentityUiState>(IdentityUiState.Loading) }
+    var cameraGranted by remember { mutableStateOf(false) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted -> cameraGranted = granted }
 
     LaunchedEffect(Unit) {
-        state = if (identityManager.hasIdentity()) {
-            val publicKey = identityManager.getPublicKey()
-            if (publicKey != null) {
-                val fingerprint = identityManager.getFingerprint(publicKey)
-                IdentityState.Ready(fingerprint)
+        cameraGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        try {
+            val identity = identityManager.getKeyPair()
+            if (identity != null) {
+                state = IdentityUiState.Ready(identity.publicKeyRaw, identity.fingerprint)
             } else {
-                IdentityState.Error("Failed to load identity")
+                state = IdentityUiState.NotCreated
             }
-        } else {
-            IdentityState.NotCreated
+        } catch (_: Exception) {
+            state = IdentityUiState.NotCreated
         }
+
+        connectionManager.startListening()
     }
 
     Column(
@@ -59,41 +94,43 @@ fun IdentityScreen(
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.primary
         )
-
-        Spacer(Modifier.height(8.dp))
-
+        Spacer(Modifier.height(4.dp))
         Text(
             text = "Anonymous Encrypted Messenger",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
-
         Spacer(Modifier.height(48.dp))
 
         when (val s = state) {
-            is IdentityState.Loading -> {
+            is IdentityUiState.Loading -> {
                 CircularProgressIndicator()
                 Spacer(Modifier.height(16.dp))
-                Text("Generating your identity...")
+                Text("Loading identity...")
             }
 
-            is IdentityState.NotCreated -> {
+            is IdentityUiState.NotCreated -> {
+                Text(
+                    text = "No identity found.\nCreate an anonymous key pair to start.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Spacer(Modifier.height(24.dp))
                 Button(onClick = {
-                    state = IdentityState.Loading
+                    state = IdentityUiState.Loading
                     try {
-                        identityManager.generateIdentity()
-                        val pk = identityManager.getPublicKey()
-                        val fp = identityManager.getFingerprint(pk!!)
-                        state = IdentityState.Ready(fp)
+                        val identity = identityManager.generateIdentity()
+                        state = IdentityUiState.Ready(identity.publicKeyRaw, identity.fingerprint)
                     } catch (e: Exception) {
-                        state = IdentityState.Error(e.message ?: "Generation failed")
+                        state = IdentityUiState.Error(e.message ?: "Failed to create identity")
                     }
                 }) {
                     Text("Create Anonymous Identity")
                 }
             }
 
-            is IdentityState.Ready -> {
+            is IdentityUiState.Ready -> {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -110,55 +147,70 @@ fun IdentityScreen(
                             style = MaterialTheme.typography.titleMedium
                         )
                         Spacer(Modifier.height(16.dp))
-                        Card(
-                            modifier = Modifier.size(160.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
+
+                        Box(
+                            modifier = Modifier
+                                .size(180.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Column(
-                                modifier = Modifier.fillMaxSize().padding(8.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text(
-                                    text = "QR Code Placeholder",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
+                            Text(
+                                text = "QR Code",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                            )
                         }
-                        Spacer(Modifier.height(16.dp))
+
+                        Spacer(Modifier.height(12.dp))
                         Text(
                             text = s.fingerprint,
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
 
+                Spacer(Modifier.height(16.dp))
+
+                ConnectionStatusBar(connectionState)
+
                 Spacer(Modifier.height(24.dp))
 
-                Button(
-                    onClick = onNavigateToContacts,
-                    modifier = Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Continue to Contacts")
+                    Button(
+                        onClick = onNavigateToContacts,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Contacts")
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            if (!cameraGranted) {
+                                cameraLauncher.launch(Manifest.permission.CAMERA)
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                        Text("Scan")
+                    }
                 }
             }
 
-            is IdentityState.Error -> {
+            is IdentityUiState.Error -> {
                 Text(
                     text = s.message,
                     color = MaterialTheme.colorScheme.error,
                     textAlign = TextAlign.Center
                 )
                 Spacer(Modifier.height(16.dp))
-                Button(onClick = {
-                    state = IdentityState.NotCreated
-                }) {
+                Button(onClick = { state = IdentityUiState.NotCreated }) {
                     Text("Retry")
                 }
             }
@@ -166,9 +218,37 @@ fun IdentityScreen(
     }
 }
 
-sealed class IdentityState {
-    data object Loading : IdentityState()
-    data object NotCreated : IdentityState()
-    data class Ready(val fingerprint: String) : IdentityState()
-    data class Error(val message: String) : IdentityState()
+@Composable
+private fun ConnectionStatusBar(state: ConnectionState) {
+    val (color, text) = when (state) {
+        ConnectionState.DISCONNECTED -> Color(0xFF999999) to "Offline"
+        ConnectionState.LISTENING -> Color(0xFF4CAF50) to "Listening for peers"
+        ConnectionState.CONNECTING -> Color(0xFFFF9800) to "Connecting..."
+        ConnectionState.CONNECTED -> Color(0xFF4CAF50) to "Connected"
+        ConnectionState.FAILED -> Color(0xFFF44336) to "Connection failed"
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(color)
+        )
+        Spacer(Modifier.size(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = color
+        )
+    }
+}
+
+sealed class IdentityUiState {
+    data object Loading : IdentityUiState()
+    data object NotCreated : IdentityUiState()
+    data class Ready(val publicKeyRaw: ByteArray, val fingerprint: String) : IdentityUiState()
+    data class Error(val message: String) : IdentityUiState()
 }

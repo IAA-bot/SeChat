@@ -37,10 +37,10 @@ class DiscoveryEngine(private val context: Context) {
         val serviceInfo = NsdServiceInfo().apply {
             serviceType = this@DiscoveryEngine.serviceType
             serviceName = this@DiscoveryEngine.serviceName
-            port = port
+            this@apply.port = port
         }
 
-        nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_TCP, registrationListener)
+        nsdManager.registerService(serviceInfo, 1, registrationListener)
 
         awaitClose {
             try {
@@ -74,7 +74,7 @@ class DiscoveryEngine(private val context: Context) {
             }
         }
 
-        nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_TCP, discoveryListener)
+        nsdManager.discoverServices(serviceType, 1, discoveryListener)
 
         awaitClose {
             try {

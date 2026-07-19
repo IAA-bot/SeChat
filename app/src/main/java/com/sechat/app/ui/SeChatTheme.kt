@@ -1,9 +1,18 @@
 package com.sechat.app.ui
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+
+internal val PrimaryBlue = Color(0xFF007AFF)
+internal val SecureGreen = Color(0xFF4CAF50)
+internal val ErrorRed = Color(0xFFF44336)
+internal val White = Color.White
+internal val SurfaceGray = Color(0xFFF5F5F5)
+internal val TextPrimary = Color(0xFF000000)
+internal val TextSecondary = Color(0xFF666666)
+internal val TextHint = Color(0xFF999999)
 
 private val LightColorScheme = lightColorScheme(
     primary = PrimaryBlue,
@@ -27,12 +36,3 @@ fun SeChatTheme(
         content = content
     )
 }
-
-internal val PrimaryBlue = androidx.compose.ui.graphics.Color(0xFF007AFF)
-internal val SecureGreen = androidx.compose.ui.graphics.Color(0xFF4CAF50)
-internal val ErrorRed = androidx.compose.ui.graphics.Color(0xFFF44336)
-internal val White = androidx.compose.ui.graphics.Color.White
-internal val SurfaceGray = androidx.compose.ui.graphics.Color(0xFFF5F5F5)
-internal val TextPrimary = androidx.compose.ui.graphics.Color(0xFF000000)
-internal val TextSecondary = androidx.compose.ui.graphics.Color(0xFF666666)
-internal val TextHint = androidx.compose.ui.graphics.Color(0xFF999999)

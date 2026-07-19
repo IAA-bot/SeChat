@@ -63,10 +63,17 @@ fun IdentityScreen(
 
     var state by remember { mutableStateOf<IdentityUiState>(IdentityUiState.Loading) }
     var cameraGranted by remember { mutableStateOf(false) }
+    var pendingScan by remember { mutableStateOf(false) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { granted -> cameraGranted = granted }
+    ) { granted ->
+        cameraGranted = granted
+        if (granted && pendingScan) {
+            onNavigateToScanner()
+            pendingScan = false
+        }
+    }
 
     LaunchedEffect(Unit) {
         cameraGranted = ContextCompat.checkSelfPermission(
@@ -156,32 +163,37 @@ fun IdentityScreen(
                         containerColor = MaterialTheme.colorScheme.surface
                     )
                 ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Your Identity",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Spacer(Modifier.height(16.dp))
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "Your Identity",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(Modifier.height(16.dp))
 
-                        Image(
-                            bitmap = s.qrBitmap.asImageBitmap(),
-                            contentDescription = "Identity QR Code",
-                            modifier = Modifier
-                                .size(200.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                        )
+                            Image(
+                                bitmap = s.qrBitmap.asImageBitmap(),
+                                contentDescription = "Identity QR Code",
+                                modifier = Modifier
+                                    .size(200.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                            )
 
-                        Spacer(Modifier.height(12.dp))
-                        Text(
-                            text = s.fingerprint,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontFamily = FontFamily.Monospace,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center
-                        )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                text = s.fingerprint,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontFamily = FontFamily.Monospace,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
 
@@ -206,6 +218,7 @@ fun IdentityScreen(
                             if (cameraGranted) {
                                 onNavigateToScanner()
                             } else {
+                                pendingScan = true
                                 cameraLauncher.launch(Manifest.permission.CAMERA)
                             }
                         },

@@ -6,8 +6,11 @@ import android.content.Intent
 import android.os.IBinder
 
 class P2PForegroundService : Service() {
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         val notification = buildNotification()
         startForeground(NOTIFICATION_ID, notification)
         return START_STICKY

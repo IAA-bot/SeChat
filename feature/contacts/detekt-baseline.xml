@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>FunctionNaming:ContactsScreen.kt$@Composable private fun ContactRow( contact: ContactUi, onClick: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:ContactsScreen.kt$@Composable private fun DiscoveryBanner( modifier: Modifier = Modifier, onStop: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:ContactsScreen.kt$@Composable private fun EmptyContactsState( modifier: Modifier = Modifier, onStartDiscovery: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:ContactsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ContactsScreen(onContactSelected: (String) -&gt; Unit)</ID>
+    <ID>MagicNumber:ContactsScreen.kt$0.7f</ID>
+    <ID>MagicNumber:ContactsScreen.kt$0xFF4CAF50</ID>
+    <ID>MagicNumber:ContactsScreen.kt$0xFF999999</ID>
+  </CurrentIssues>
+</SmellBaseline>

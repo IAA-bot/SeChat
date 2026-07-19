@@ -1,11 +1,10 @@
 package com.sechat.core.crypto
 
 object QrCodeDecoder {
-
     data class DecodedData(
         val version: String,
         val fingerprint: String,
-        val publicKeyHex: String
+        val publicKeyHex: String,
     )
 
     fun decode(rawText: String): DecodedData? {
@@ -15,7 +14,7 @@ object QrCodeDecoder {
         return DecodedData(
             version = parts[0],
             fingerprint = parts[1],
-            publicKeyHex = parts.subList(2, parts.size).joinToString(":")
+            publicKeyHex = parts.subList(2, parts.size).joinToString(":"),
         )
     }
 }

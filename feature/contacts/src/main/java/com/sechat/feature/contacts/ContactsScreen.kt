@@ -26,22 +26,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ContactsScreen(
-    onContactSelected: (String) -> Unit
-) {
+fun ContactsScreen(onContactSelected: (String) -> Unit) {
     var contacts by remember { mutableStateOf(listOf<ContactUi>()) }
     var isDiscovering by remember { mutableStateOf(false) }
 
@@ -52,28 +48,29 @@ fun ContactsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { isDiscovering = !isDiscovering },
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary,
             ) {
                 Icon(Icons.Default.PersonAdd, contentDescription = "Add Contact")
             }
-        }
+        },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
         ) {
             if (contacts.isEmpty() && !isDiscovering) {
                 EmptyContactsState(
                     modifier = Modifier.weight(1f),
-                    onStartDiscovery = { isDiscovering = true }
+                    onStartDiscovery = { isDiscovering = true },
                 )
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(contacts) { contact ->
                         ContactRow(
                             contact = contact,
-                            onClick = { onContactSelected(contact.id) }
+                            onClick = { onContactSelected(contact.id) },
                         )
                     }
                 }
@@ -82,7 +79,7 @@ fun ContactsScreen(
             if (isDiscovering) {
                 DiscoveryBanner(
                     modifier = Modifier.fillMaxWidth(),
-                    onStop = { isDiscovering = false }
+                    onStop = { isDiscovering = false },
                 )
             }
         }
@@ -92,36 +89,36 @@ fun ContactsScreen(
 @Composable
 private fun EmptyContactsState(
     modifier: Modifier = Modifier,
-    onStartDiscovery: () -> Unit
+    onStartDiscovery: () -> Unit,
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = "No contacts yet",
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         )
         Spacer(Modifier.height(8.dp))
         Text(
             text = "Scan a QR code or discover nearby peers",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
         )
         Spacer(Modifier.height(24.dp))
         Surface(
             onClick = onStartDiscovery,
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.fillMaxWidth(0.7f)
+            modifier = Modifier.fillMaxWidth(0.7f),
         ) {
             Text(
                 text = "Discover Nearby",
                 modifier = Modifier.padding(16.dp),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
         }
     }
@@ -130,26 +127,27 @@ private fun EmptyContactsState(
 @Composable
 private fun ContactRow(
     contact: ContactUi,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Surface(
             modifier = Modifier.size(44.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer
+            color = MaterialTheme.colorScheme.primaryContainer,
         ) {
             Text(
                 text = contact.initials,
                 modifier = Modifier.padding(8.dp),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
         }
         Spacer(Modifier.width(12.dp))
@@ -157,12 +155,12 @@ private fun ContactRow(
             Text(
                 text = contact.displayName,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
             Text(
                 text = if (contact.isOnline) "Online" else "Offline",
                 style = MaterialTheme.typography.bodySmall,
-                color = if (contact.isOnline) Color(0xFF4CAF50) else Color(0xFF999999)
+                color = if (contact.isOnline) Color(0xFF4CAF50) else Color(0xFF999999),
             )
         }
     }
@@ -171,30 +169,30 @@ private fun ContactRow(
 @Composable
 private fun DiscoveryBanner(
     modifier: Modifier = Modifier,
-    onStop: () -> Unit
+    onStop: () -> Unit,
 ) {
     Surface(
         modifier = modifier,
-        color = MaterialTheme.colorScheme.primaryContainer
+        color = MaterialTheme.colorScheme.primaryContainer,
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "Discovering nearby peers...",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             Surface(
                 onClick = onStop,
                 shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.surface
+                color = MaterialTheme.colorScheme.surface,
             ) {
                 Text(
                     text = "Stop",
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
             }
         }
@@ -205,5 +203,5 @@ data class ContactUi(
     val id: String,
     val displayName: String,
     val initials: String,
-    val isOnline: Boolean
+    val isOnline: Boolean,
 )

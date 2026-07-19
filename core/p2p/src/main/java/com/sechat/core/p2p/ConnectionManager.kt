@@ -5,14 +5,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.InputStream
-import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
@@ -23,18 +21,17 @@ enum class ConnectionState {
     LISTENING,
     CONNECTING,
     CONNECTED,
-    FAILED
+    FAILED,
 }
 
 data class PeerConnection(
     val peerId: String,
     val host: String,
     val port: Int,
-    val socket: Socket? = null
+    val socket: Socket? = null,
 )
 
 class ConnectionManager(private val localPort: Int = 0) {
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var serverSocket: ServerSocket? = null
     private var listenJob: Job? = null
@@ -51,16 +48,17 @@ class ConnectionManager(private val localPort: Int = 0) {
         val actualPort = serverSocket!!.localPort
         _state.value = ConnectionState.LISTENING
 
-        listenJob = scope.launch {
-            while (isActive) {
-                try {
-                    val client = serverSocket?.accept() ?: break
-                    handleConnection(client)
-                } catch (_: Exception) {
-                    break
+        listenJob =
+            scope.launch {
+                while (isActive) {
+                    try {
+                        val client = serverSocket?.accept() ?: break
+                        handleConnection(client)
+                    } catch (_: Exception) {
+                        break
+                    }
                 }
             }
-        }
         return actualPort
     }
 
@@ -73,7 +71,11 @@ class ConnectionManager(private val localPort: Int = 0) {
         }
     }
 
-    suspend fun connect(peerId: String, host: String, port: Int): Boolean {
+    suspend fun connect(
+        peerId: String,
+        host: String,
+        port: Int,
+    ): Boolean {
         _state.value = ConnectionState.CONNECTING
         return try {
             val socket = Socket()
@@ -88,7 +90,10 @@ class ConnectionManager(private val localPort: Int = 0) {
         }
     }
 
-    suspend fun send(peerId: String, message: WireMessage): Boolean {
+    suspend fun send(
+        peerId: String,
+        message: WireMessage,
+    ): Boolean {
         val socket = activeConnections[peerId] ?: return false
         return try {
             val output = socket.getOutputStream()
@@ -123,9 +128,12 @@ class ConnectionManager(private val localPort: Int = 0) {
                     if (message != null) {
                         activeConnections[message.senderId] = socket
                         _incomingMessages.send(message)
-                    } else break
+                    } else {
+                        break
+                    }
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
         }
     }
 }

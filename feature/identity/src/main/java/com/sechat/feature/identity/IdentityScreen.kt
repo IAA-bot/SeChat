@@ -52,36 +52,39 @@ import org.koin.java.KoinJavaComponent.get
 @Composable
 fun IdentityScreen(
     onNavigateToContacts: () -> Unit,
-    onNavigateToScanner: () -> Unit
+    onNavigateToScanner: () -> Unit,
 ) {
     val context = LocalContext.current
     val identityManager = remember { get<IdentityManager>(IdentityManager::class.java) }
     val connectionManager = remember { get<ConnectionManager>(ConnectionManager::class.java) }
     val connectionState by connectionManager.state.collectAsStateWithLifecycle(
-        initialValue = ConnectionState.DISCONNECTED
+        initialValue = ConnectionState.DISCONNECTED,
     )
 
     var state by remember { mutableStateOf<IdentityUiState>(IdentityUiState.Loading) }
 
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) onNavigateToScanner()
-    }
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            if (granted) onNavigateToScanner()
+        }
 
     LaunchedEffect(Unit) {
         try {
             val identity = identityManager.getKeyPair()
             if (identity != null) {
-                val qrBitmap = QrCodeEncoder.encode(
-                    identity.publicKeyRaw,
-                    identity.fingerprint
-                )
-                state = IdentityUiState.Ready(
-                    publicKeyRaw = identity.publicKeyRaw,
-                    fingerprint = identity.fingerprint,
-                    qrBitmap = qrBitmap
-                )
+                val qrBitmap =
+                    QrCodeEncoder.encode(
+                        identity.publicKeyRaw,
+                        identity.fingerprint,
+                    )
+                state =
+                    IdentityUiState.Ready(
+                        publicKeyRaw = identity.publicKeyRaw,
+                        fingerprint = identity.fingerprint,
+                        qrBitmap = qrBitmap,
+                    )
             } else {
                 state = IdentityUiState.NotCreated
             }
@@ -95,18 +98,18 @@ fun IdentityScreen(
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = "SeChat",
             style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
         )
         Spacer(Modifier.height(4.dp))
         Text(
             text = "Anonymous Encrypted Messenger",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         )
         Spacer(Modifier.height(48.dp))
 
@@ -121,22 +124,24 @@ fun IdentityScreen(
                     text = "No identity found.\nCreate an anonymous key pair to start.",
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
                 Spacer(Modifier.height(24.dp))
                 Button(onClick = {
                     state = IdentityUiState.Loading
                     try {
                         val identity = identityManager.generateIdentity()
-                        val qrBitmap = QrCodeEncoder.encode(
-                            identity.publicKeyRaw,
-                            identity.fingerprint
-                        )
-                        state = IdentityUiState.Ready(
-                            publicKeyRaw = identity.publicKeyRaw,
-                            fingerprint = identity.fingerprint,
-                            qrBitmap = qrBitmap
-                        )
+                        val qrBitmap =
+                            QrCodeEncoder.encode(
+                                identity.publicKeyRaw,
+                                identity.fingerprint,
+                            )
+                        state =
+                            IdentityUiState.Ready(
+                                publicKeyRaw = identity.publicKeyRaw,
+                                fingerprint = identity.fingerprint,
+                                qrBitmap = qrBitmap,
+                            )
                     } catch (e: Exception) {
                         state = IdentityUiState.Error(e.message ?: "Failed to create identity")
                     }
@@ -149,30 +154,32 @@ fun IdentityScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                        ),
                 ) {
                     Box(
                         modifier = Modifier.fillMaxWidth().padding(24.dp),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                            verticalArrangement = Arrangement.Center,
                         ) {
                             Text(
                                 text = "Your Identity",
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium,
                             )
                             Spacer(Modifier.height(16.dp))
 
                             Image(
                                 bitmap = s.qrBitmap.asImageBitmap(),
                                 contentDescription = "Identity QR Code",
-                                modifier = Modifier
-                                    .size(200.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                modifier =
+                                    Modifier
+                                        .size(200.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
                             )
 
                             Spacer(Modifier.height(12.dp))
@@ -181,7 +188,7 @@ fun IdentityScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 fontFamily = FontFamily.Monospace,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
                             )
                         }
                     }
@@ -195,26 +202,27 @@ fun IdentityScreen(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Button(
                         onClick = onNavigateToContacts,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     ) {
                         Text("Contacts")
                     }
                     OutlinedButton(
                         onClick = {
-                            val hasCamera = ContextCompat.checkSelfPermission(
-                                context, Manifest.permission.CAMERA
-                            ) == PackageManager.PERMISSION_GRANTED
+                            val hasCamera =
+                                ContextCompat.checkSelfPermission(
+                                    context, Manifest.permission.CAMERA,
+                                ) == PackageManager.PERMISSION_GRANTED
                             if (hasCamera) {
                                 onNavigateToScanner()
                             } else {
                                 cameraLauncher.launch(Manifest.permission.CAMERA)
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     ) {
                         Icon(Icons.Default.QrCodeScanner, contentDescription = null)
                         Text("Scan")
@@ -226,7 +234,7 @@ fun IdentityScreen(
                 Text(
                     text = s.message,
                     color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = { state = IdentityUiState.NotCreated }) {
@@ -239,39 +247,44 @@ fun IdentityScreen(
 
 @Composable
 private fun ConnectionStatusBar(state: ConnectionState) {
-    val (color, text) = when (state) {
-        ConnectionState.DISCONNECTED -> Color(0xFF999999) to "Offline"
-        ConnectionState.LISTENING -> Color(0xFF4CAF50) to "Listening for peers"
-        ConnectionState.CONNECTING -> Color(0xFFFF9800) to "Connecting..."
-        ConnectionState.CONNECTED -> Color(0xFF4CAF50) to "Connected"
-        ConnectionState.FAILED -> Color(0xFFF44336) to "Connection failed"
-    }
+    val (color, text) =
+        when (state) {
+            ConnectionState.DISCONNECTED -> Color(0xFF999999) to "Offline"
+            ConnectionState.LISTENING -> Color(0xFF4CAF50) to "Listening for peers"
+            ConnectionState.CONNECTING -> Color(0xFFFF9800) to "Connecting..."
+            ConnectionState.CONNECTED -> Color(0xFF4CAF50) to "Connected"
+            ConnectionState.FAILED -> Color(0xFFF44336) to "Connection failed"
+        }
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 4.dp)
+        modifier = Modifier.padding(vertical = 4.dp),
     ) {
         Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(color)
+            modifier =
+                Modifier
+                    .size(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(color),
         )
         Spacer(Modifier.size(8.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
-            color = color
+            color = color,
         )
     }
 }
 
 sealed class IdentityUiState {
     data object Loading : IdentityUiState()
+
     data object NotCreated : IdentityUiState()
+
     data class Ready(
         val publicKeyRaw: ByteArray,
         val fingerprint: String,
-        val qrBitmap: android.graphics.Bitmap
+        val qrBitmap: android.graphics.Bitmap,
     ) : IdentityUiState()
+
     data class Error(val message: String) : IdentityUiState()
 }

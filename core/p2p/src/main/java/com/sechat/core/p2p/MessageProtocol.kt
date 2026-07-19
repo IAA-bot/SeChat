@@ -10,7 +10,8 @@ enum class MessageType(val value: Int) {
     CIPHERTEXT(2),
     SESSION_SETUP(3),
     PING(4),
-    PONG(5);
+    PONG(5),
+    ;
 
     companion object {
         fun fromValue(v: Int): MessageType =
@@ -22,7 +23,7 @@ enum class MessageType(val value: Int) {
 data class WireMessage(
     val type: MessageType,
     val senderId: String,
-    val payload: ByteArray
+    val payload: ByteArray,
 ) {
     fun serialize(): ByteArray {
         val baos = ByteArrayOutputStream()

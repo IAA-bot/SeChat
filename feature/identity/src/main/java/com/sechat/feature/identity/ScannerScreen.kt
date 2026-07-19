@@ -44,14 +44,13 @@ import com.sechat.core.crypto.QrCodeDecoder
 import com.sechat.core.data.ContactRepository
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.get
-import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScannerScreen(
     onPeerScanned: (contactId: Long) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -62,13 +61,14 @@ fun ScannerScreen(
     var cameraGranted by remember {
         mutableStateOf(
             PermissionChecker.checkSelfPermission(context, Manifest.permission.CAMERA)
-                == PermissionChecker.PERMISSION_GRANTED
+                == PermissionChecker.PERMISSION_GRANTED,
         )
     }
 
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted -> cameraGranted = granted }
+    val launcher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted -> cameraGranted = granted }
 
     DisposableEffect(Unit) {
         if (!cameraGranted) launcher.launch(Manifest.permission.CAMERA)
@@ -83,13 +83,13 @@ fun ScannerScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         Box(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             if (cameraGranted) {
                 CameraPreview(
@@ -101,21 +101,22 @@ fun ScannerScreen(
                         if (decoded != null) {
                             scope.launch {
                                 val displayName = decoded.fingerprint.take(8)
-                                val hexBytes = decoded.publicKeyHex.chunked(2)
-                                    .map { it.toInt(16).toByte() }.toByteArray()
+                                val hexBytes =
+                                    decoded.publicKeyHex.chunked(2)
+                                        .map { it.toInt(16).toByte() }.toByteArray()
                                 val id = contactRepo.addContact(displayName, hexBytes)
                                 onPeerScanned(id)
                             }
                         } else {
                             scanning = true
                         }
-                    }
+                    },
                 )
             } else {
                 Text(
                     text = "Camera permission required to scan QR codes",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 )
             }
         }
@@ -130,19 +131,21 @@ private fun CameraPreview(onQrDetected: (String) -> Unit) {
 
     AndroidView(
         factory = { ctx ->
-            val previewView = PreviewView(ctx).apply {
-                scaleType = PreviewView.ScaleType.FILL_CENTER
-            }
+            val previewView =
+                PreviewView(ctx).apply {
+                    scaleType = PreviewView.ScaleType.FILL_CENTER
+                }
             val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
             cameraProviderFuture.addListener({
                 val cameraProvider = cameraProviderFuture.get()
                 val preview = Preview.Builder().build()
                 preview.setSurfaceProvider(previewView.surfaceProvider)
 
-                val analysis = ImageAnalysis.Builder()
-                    .setTargetResolution(Size(1280, 720))
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
+                val analysis =
+                    ImageAnalysis.Builder()
+                        .setTargetResolution(Size(1280, 720))
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
 
                 analysis.setAnalyzer(executor) { image ->
                     scanQrCode(image)?.let(onQrDetected)
@@ -151,14 +154,17 @@ private fun CameraPreview(onQrDetected: (String) -> Unit) {
                 try {
                     cameraProvider.unbindAll()
                     cameraProvider.bindToLifecycle(
-                        lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA,
-                        preview, analysis
+                        lifecycleOwner,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        preview,
+                        analysis,
                     )
-                } catch (_: Exception) { }
+                } catch (_: Exception) {
+                }
             }, ContextCompat.getMainExecutor(ctx))
             previewView
         },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     )
 
     DisposableEffect(Unit) { onDispose { executor.shutdown() } }
@@ -175,11 +181,14 @@ private fun scanQrCode(image: ImageProxy): String? {
         }
     }
     return try {
-        val result = MultiFormatReader().decode(
-            BinaryBitmap(HybridBinarizer(RGBLuminanceSource(image.width, image.height, rgb)))
-        )
-        image.close(); result.text
+        val result =
+            MultiFormatReader().decode(
+                BinaryBitmap(HybridBinarizer(RGBLuminanceSource(image.width, image.height, rgb))),
+            )
+        image.close()
+        result.text
     } catch (_: Exception) {
-        image.close(); null
+        image.close()
+        null
     }
 }

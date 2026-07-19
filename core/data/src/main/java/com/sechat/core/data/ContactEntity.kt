@@ -11,7 +11,7 @@ data class ContactEntity(
     @ColumnInfo(name = "display_name") val displayName: String,
     @ColumnInfo(name = "first_seen") val firstSeen: Long = System.currentTimeMillis(),
     @ColumnInfo(name = "last_seen") val lastSeen: Long = System.currentTimeMillis(),
-    @ColumnInfo(name = "is_online") val isOnline: Boolean = false
+    @ColumnInfo(name = "is_online") val isOnline: Boolean = false,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

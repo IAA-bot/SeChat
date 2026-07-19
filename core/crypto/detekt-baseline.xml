@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>MagicNumber:IdentityManager.kt$IdentityManager.Companion$4</ID>
+    <ID>MagicNumber:QrCodeDecoder.kt$QrCodeDecoder$3</ID>
+    <ID>MagicNumber:SessionCipher.kt$SessionCipher.Companion$16</ID>
+    <ID>MagicNumber:SessionCipher.kt$SessionCipher.Companion$24</ID>
+    <ID>MagicNumber:SessionCipher.kt$SessionCipher.Companion$32</ID>
+    <ID>MagicNumber:SessionCipher.kt$SessionCipher.Companion$40</ID>
+    <ID>MagicNumber:SessionCipher.kt$SessionCipher.Companion$48</ID>
+    <ID>MagicNumber:SessionCipher.kt$SessionCipher.Companion$56</ID>
+    <ID>MagicNumber:SessionCipher.kt$SessionCipher.Companion$8</ID>
+    <ID>MagicNumber:SessionCipher.kt$SessionCipher.Session$8</ID>
+    <ID>ReturnCount:QrCodeDecoder.kt$QrCodeDecoder$fun decode(rawText: String): DecodedData?</ID>
+  </CurrentIssues>
+</SmellBaseline>

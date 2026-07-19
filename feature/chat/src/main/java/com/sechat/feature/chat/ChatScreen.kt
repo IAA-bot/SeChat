@@ -55,13 +55,13 @@ import org.koin.java.KoinJavaComponent.get
 @Composable
 fun ChatScreen(
     contactId: String,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
 ) {
     val messageManager = remember { get<MessageManager>(MessageManager::class.java) }
     val connectionManager = remember { get<ConnectionManager>(ConnectionManager::class.java) }
     val messages by messageManager.messages.collectAsStateWithLifecycle(emptyList())
     val connectionState by connectionManager.state.collectAsStateWithLifecycle(
-        initialValue = ConnectionState.DISCONNECTED
+        initialValue = ConnectionState.DISCONNECTED,
     )
 
     var inputText by remember { mutableStateOf("") }
@@ -92,12 +92,12 @@ fun ChatScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding)
+            modifier = Modifier.fillMaxSize().padding(padding),
         ) {
             if (connectionState == ConnectionState.FAILED) {
                 ConnectionFailedBanner(onRetry = {
@@ -108,14 +108,14 @@ fun ChatScreen(
             if (messages.isEmpty() && connectionState == ConnectionState.CONNECTED) {
                 Box(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "This is the beginning of your encrypted conversation.\nMessages are end-to-end encrypted.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(32.dp)
+                        modifier = Modifier.padding(32.dp),
                     )
                 }
             } else {
@@ -124,7 +124,7 @@ fun ChatScreen(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     state = listState,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
-                    contentPadding = PaddingValues(16.dp)
+                    contentPadding = PaddingValues(16.dp),
                 ) {
                     items(messages) { msg ->
                         if (msg == firstEncryptedMsg) {
@@ -139,7 +139,7 @@ fun ChatScreen(
 
             Row(
                 modifier = Modifier.fillMaxWidth().padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 OutlinedTextField(
                     value = inputText,
@@ -147,7 +147,7 @@ fun ChatScreen(
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("Type a message") },
                     shape = RoundedCornerShape(20.dp),
-                    singleLine = true
+                    singleLine = true,
                 )
                 Spacer(Modifier.width(8.dp))
                 Surface(
@@ -159,7 +159,7 @@ fun ChatScreen(
                     },
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(44.dp)
+                    modifier = Modifier.size(44.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(text = "\u2191", color = Color.White, fontSize = 20.sp)
@@ -172,18 +172,19 @@ fun ChatScreen(
 
 @Composable
 private fun ConnectionIndicator(state: ConnectionState) {
-    val (color, text) = when (state) {
-        ConnectionState.DISCONNECTED -> Color(0xFF999999) to "Offline"
-        ConnectionState.LISTENING -> Color(0xFF4CAF50) to "E2EE \u2713"
-        ConnectionState.CONNECTING -> Color(0xFFFF9800) to "Connecting"
-        ConnectionState.CONNECTED -> Color(0xFF4CAF50) to "E2EE \u2713"
-        ConnectionState.FAILED -> Color(0xFFF44336) to "Disconnected"
-    }
+    val (color, text) =
+        when (state) {
+            ConnectionState.DISCONNECTED -> Color(0xFF999999) to "Offline"
+            ConnectionState.LISTENING -> Color(0xFF4CAF50) to "E2EE \u2713"
+            ConnectionState.CONNECTING -> Color(0xFFFF9800) to "Connecting"
+            ConnectionState.CONNECTED -> Color(0xFF4CAF50) to "E2EE \u2713"
+            ConnectionState.FAILED -> Color(0xFFF44336) to "Disconnected"
+        }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Surface(
             modifier = Modifier.size(8.dp),
             shape = CircleShape,
-            color = color
+            color = color,
         ) {}
         Spacer(Modifier.width(4.dp))
         Text(text = text, style = MaterialTheme.typography.bodySmall, color = color)
@@ -194,16 +195,17 @@ private fun ConnectionIndicator(state: ConnectionState) {
 private fun EncryptionConfirmedBanner() {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f)
-        ),
-        shape = RoundedCornerShape(8.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = Color(0xFF4CAF50).copy(alpha = 0.1f),
+            ),
+        shape = RoundedCornerShape(8.dp),
     ) {
         Text(
             text = "\uD83D\uDD12 Encrypted connection established. Only you and the recipient can read these messages.",
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(12.dp),
-            color = Color(0xFF2E7D32)
+            color = Color(0xFF2E7D32),
         )
     }
 }
@@ -212,25 +214,26 @@ private fun EncryptionConfirmedBanner() {
 private fun ConnectionFailedBanner(onRetry: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF44336).copy(alpha = 0.1f)
-        ),
-        shape = RoundedCornerShape(8.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = Color(0xFFF44336).copy(alpha = 0.1f),
+            ),
+        shape = RoundedCornerShape(8.dp),
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "Connection failed. Tap to retry.",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFFC62828),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(8.dp))
             Button(
                 onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)),
             ) {
                 Text("Retry", color = Color.White)
             }
@@ -243,21 +246,23 @@ private fun MessageBubble(message: ChatMessage) {
     val alignment = if (message.isSent) Alignment.End else Alignment.Start
     val bg = if (message.isSent) Color(0xFF007AFF) else Color(0xFFF0F0F0)
     val fg = if (message.isSent) Color.White else Color.Black
-    val shape = if (message.isSent)
-        RoundedCornerShape(16.dp, 4.dp, 16.dp, 16.dp)
-    else
-        RoundedCornerShape(4.dp, 16.dp, 16.dp, 16.dp)
+    val shape =
+        if (message.isSent) {
+            RoundedCornerShape(16.dp, 4.dp, 16.dp, 16.dp)
+        } else {
+            RoundedCornerShape(4.dp, 16.dp, 16.dp, 16.dp)
+        }
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-        horizontalAlignment = alignment
+        horizontalAlignment = alignment,
     ) {
         Surface(shape = shape, color = bg) {
             Text(
                 text = message.text,
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                 color = fg,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
     }

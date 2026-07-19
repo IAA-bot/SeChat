@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>FunctionNaming:ChatScreen.kt$@Composable private fun ConnectionFailedBanner(onRetry: () -&gt; Unit)</ID>
+    <ID>FunctionNaming:ChatScreen.kt$@Composable private fun ConnectionIndicator(state: ConnectionState)</ID>
+    <ID>FunctionNaming:ChatScreen.kt$@Composable private fun EncryptionConfirmedBanner()</ID>
+    <ID>FunctionNaming:ChatScreen.kt$@Composable private fun MessageBubble(message: ChatMessage)</ID>
+    <ID>FunctionNaming:ChatScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ChatScreen( contactId: String, onNavigateBack: () -&gt; Unit, )</ID>
+    <ID>LongMethod:ChatScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ChatScreen( contactId: String, onNavigateBack: () -&gt; Unit, )</ID>
+    <ID>MagicNumber:ChatScreen.kt$0xFF007AFF</ID>
+    <ID>MagicNumber:ChatScreen.kt$0xFF2E7D32</ID>
+    <ID>MagicNumber:ChatScreen.kt$0xFF4CAF50</ID>
+    <ID>MagicNumber:ChatScreen.kt$0xFF999999</ID>
+    <ID>MagicNumber:ChatScreen.kt$0xFFC62828</ID>
+    <ID>MagicNumber:ChatScreen.kt$0xFFF0F0F0</ID>
+    <ID>MagicNumber:ChatScreen.kt$0xFFF44336</ID>
+    <ID>MagicNumber:ChatScreen.kt$0xFFFF9800</ID>
+    <ID>MagicNumber:ChatScreen.kt$8</ID>
+    <ID>MaxLineLength:ChatScreen.kt$text = "This is the beginning of your encrypted conversation.\nMessages are end-to-end encrypted."</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -6,13 +6,12 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 
 class IdentityManager {
-
     private var currentIdentity: SechatIdentity? = null
 
     data class SechatIdentity(
         val keyPair: KeyPair,
         val publicKeyRaw: ByteArray,
-        val fingerprint: String
+        val fingerprint: String,
     )
 
     fun generateIdentity(): SechatIdentity {
@@ -28,9 +27,14 @@ class IdentityManager {
 
     fun hasIdentity(): Boolean = currentIdentity != null
 
-    fun deleteIdentity() { currentIdentity = null }
+    fun deleteIdentity() {
+        currentIdentity = null
+    }
 
-    fun verifyFingerprint(rawKey: ByteArray, expectedFingerprint: String): Boolean {
+    fun verifyFingerprint(
+        rawKey: ByteArray,
+        expectedFingerprint: String,
+    ): Boolean {
         return fingerprint(rawKey) == expectedFingerprint
     }
 

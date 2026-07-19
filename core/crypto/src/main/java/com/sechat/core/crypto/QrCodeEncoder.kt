@@ -6,16 +6,19 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 
 object QrCodeEncoder {
-
     private const val QR_SIZE = 512
 
-    fun encode(publicKeyRaw: ByteArray, fingerprint: String): Bitmap {
-        val content = buildString {
-            append("SECHAT1:")
-            append(fingerprint.replace(" ", ""))
-            append(":")
-            append(publicKeyRaw.joinToString("") { "%02x".format(it) })
-        }
+    fun encode(
+        publicKeyRaw: ByteArray,
+        fingerprint: String,
+    ): Bitmap {
+        val content =
+            buildString {
+                append("SECHAT1:")
+                append(fingerprint.replace(" ", ""))
+                append(":")
+                append(publicKeyRaw.joinToString("") { "%02x".format(it) })
+            }
         return generateQrBitmap(content)
     }
 
@@ -30,5 +33,4 @@ object QrCodeEncoder {
         }
         return bitmap
     }
-
 }

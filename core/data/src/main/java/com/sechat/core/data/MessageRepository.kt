@@ -10,11 +10,10 @@ data class StoredMessage(
     val sender: String,
     val timestamp: Long,
     val isSent: Boolean,
-    val isEncrypted: Boolean = true
+    val isEncrypted: Boolean = true,
 )
 
 class MessageRepository(private val messageDao: MessageDao) {
-
     fun allStoredMessages(): Flow<List<StoredMessage>> =
         messageDao.getAllMessages().map { entities ->
             entities.map { it.toStoredMessage() }
@@ -29,26 +28,28 @@ class MessageRepository(private val messageDao: MessageDao) {
         sessionId: String,
         sender: String,
         ciphertext: ByteArray,
-        isSent: Boolean
+        isSent: Boolean,
     ): Long {
         return messageDao.insert(
             MessageEntity(
                 sessionId = sessionId,
                 sender = sender,
                 ciphertext = ciphertext,
-                isSent = isSent
-            )
+                isSent = isSent,
+            ),
         )
     }
 
     suspend fun markAsRead(sessionId: String) = messageDao.markAsRead(sessionId)
+
     suspend fun cleanEphemeral() = messageDao.deleteEphemeralMessages()
 
-    private fun MessageEntity.toStoredMessage() = StoredMessage(
-        id = id,
-        sessionId = sessionId,
-        sender = sender,
-        timestamp = timestamp,
-        isSent = isSent
-    )
+    private fun MessageEntity.toStoredMessage() =
+        StoredMessage(
+            id = id,
+            sessionId = sessionId,
+            sender = sender,
+            timestamp = timestamp,
+            isSent = isSent,
+        )
 }

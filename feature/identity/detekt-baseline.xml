@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>FunctionNaming:IdentityScreen.kt$@Composable fun IdentityScreen( onNavigateToContacts: () -&gt; Unit, onNavigateToScanner: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:IdentityScreen.kt$@Composable private fun ConnectionStatusBar(state: ConnectionState)</ID>
+    <ID>FunctionNaming:ScannerScreen.kt$@Composable private fun CameraPreview(onQrDetected: (String) -&gt; Unit)</ID>
+    <ID>FunctionNaming:ScannerScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ScannerScreen( onPeerScanned: (contactId: Long) -&gt; Unit, onNavigateBack: () -&gt; Unit, )</ID>
+    <ID>LongMethod:IdentityScreen.kt$@Composable fun IdentityScreen( onNavigateToContacts: () -&gt; Unit, onNavigateToScanner: () -&gt; Unit, )</ID>
+    <ID>LongMethod:ScannerScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ScannerScreen( onPeerScanned: (contactId: Long) -&gt; Unit, onNavigateBack: () -&gt; Unit, )</ID>
+    <ID>MagicNumber:IdentityScreen.kt$0xFF4CAF50</ID>
+    <ID>MagicNumber:IdentityScreen.kt$0xFF999999</ID>
+    <ID>MagicNumber:IdentityScreen.kt$0xFFF44336</ID>
+    <ID>MagicNumber:IdentityScreen.kt$0xFFFF9800</ID>
+    <ID>MagicNumber:ScannerScreen.kt$0xFF</ID>
+    <ID>MagicNumber:ScannerScreen.kt$1280</ID>
+    <ID>MagicNumber:ScannerScreen.kt$16</ID>
+    <ID>MagicNumber:ScannerScreen.kt$24</ID>
+    <ID>MagicNumber:ScannerScreen.kt$720</ID>
+    <ID>MagicNumber:ScannerScreen.kt$8</ID>
+    <ID>TooGenericExceptionCaught:IdentityScreen.kt$e: Exception</ID>
+    <ID>UnusedPrivateProperty:ScannerScreen.kt$val identityManager = remember { get&lt;IdentityManager&gt;(IdentityManager::class.java) }</ID>
+  </CurrentIssues>
+</SmellBaseline>

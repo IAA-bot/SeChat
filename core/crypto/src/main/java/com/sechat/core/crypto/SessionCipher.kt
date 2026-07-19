@@ -1,6 +1,5 @@
 package com.sechat.core.crypto
 
-import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.PublicKey
@@ -10,11 +9,10 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 class SessionCipher {
-
     data class Session(
         val sharedSecret: ByteArray,
         val localKeyPair: KeyPair,
-        val remotePublicKey: PublicKey
+        val remotePublicKey: PublicKey,
     ) {
         private var sendCounter: Long = 0
         private var recvCounter: Long = 0
@@ -22,16 +20,21 @@ class SessionCipher {
         fun encrypt(plaintext: ByteArray): CipherText {
             val key = deriveKey(sharedSecret, sendCounter)
             val cipher = Cipher.getInstance(AES_GCM_NO_PADDING)
-            val iv = ByteArray(GCM_IV_LENGTH).also {
-                java.security.SecureRandom().nextBytes(it)
-            }
+            val iv =
+                ByteArray(GCM_IV_LENGTH).also {
+                    java.security.SecureRandom().nextBytes(it)
+                }
             cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(GCM_TAG_LENGTH * 8, iv))
             val ciphertext = cipher.doFinal(plaintext)
             sendCounter++
             return CipherText(ciphertext, iv, sendCounter - 1)
         }
 
-        fun decrypt(ciphertext: ByteArray, iv: ByteArray, counter: Long): ByteArray {
+        fun decrypt(
+            ciphertext: ByteArray,
+            iv: ByteArray,
+            counter: Long,
+        ): ByteArray {
             val key = deriveKey(sharedSecret, counter)
             val cipher = Cipher.getInstance(AES_GCM_NO_PADDING)
             cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(GCM_TAG_LENGTH * 8, iv))
@@ -44,20 +47,29 @@ class SessionCipher {
     data class CipherText(
         val ciphertext: ByteArray,
         val iv: ByteArray,
-        val messageCounter: Long
+        val messageCounter: Long,
     )
 
-    fun createSenderSession(localKeyPair: KeyPair, remotePublicKey: PublicKey): Session {
+    fun createSenderSession(
+        localKeyPair: KeyPair,
+        remotePublicKey: PublicKey,
+    ): Session {
         val sharedSecret = ecdh(localKeyPair, remotePublicKey)
         return Session(sharedSecret, localKeyPair, remotePublicKey)
     }
 
-    fun createReceiverSession(localKeyPair: KeyPair, remotePublicKey: PublicKey): Session {
+    fun createReceiverSession(
+        localKeyPair: KeyPair,
+        remotePublicKey: PublicKey,
+    ): Session {
         val sharedSecret = ecdh(localKeyPair, remotePublicKey)
         return Session(sharedSecret, localKeyPair, remotePublicKey)
     }
 
-    private fun ecdh(keyPair: KeyPair, publicKey: PublicKey): ByteArray {
+    private fun ecdh(
+        keyPair: KeyPair,
+        publicKey: PublicKey,
+    ): ByteArray {
         val ka = KeyAgreement.getInstance("ECDH")
         ka.init(keyPair.private)
         ka.doPhase(publicKey, true)
@@ -69,7 +81,10 @@ class SessionCipher {
         const val GCM_IV_LENGTH = 12
         const val GCM_TAG_LENGTH = 16
 
-        fun deriveKey(sharedSecret: ByteArray, counter: Long): ByteArray {
+        fun deriveKey(
+            sharedSecret: ByteArray,
+            counter: Long,
+        ): ByteArray {
             val input = sharedSecret + longToBytes(counter)
             val digest = MessageDigest.getInstance("SHA-256")
             return digest.digest(input).copyOf(16)
@@ -77,10 +92,14 @@ class SessionCipher {
 
         private fun longToBytes(value: Long): ByteArray {
             return byteArrayOf(
-                (value shr 56).toByte(), (value shr 48).toByte(),
-                (value shr 40).toByte(), (value shr 32).toByte(),
-                (value shr 24).toByte(), (value shr 16).toByte(),
-                (value shr 8).toByte(), value.toByte()
+                (value shr 56).toByte(),
+                (value shr 48).toByte(),
+                (value shr 40).toByte(),
+                (value shr 32).toByte(),
+                (value shr 24).toByte(),
+                (value shr 16).toByte(),
+                (value shr 8).toByte(),
+                value.toByte(),
             )
         }
     }

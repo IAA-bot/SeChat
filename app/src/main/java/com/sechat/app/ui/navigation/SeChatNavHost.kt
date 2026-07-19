@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.sechat.feature.chat.ChatScreen
 import com.sechat.feature.contacts.ContactsScreen
 import com.sechat.feature.identity.IdentityScreen
-import com.sechat.feature.chat.ChatScreen
 import com.sechat.feature.identity.ScannerScreen
 
 object SeChatRoutes {
@@ -24,12 +24,12 @@ fun SeChatNavHost() {
 
     NavHost(
         navController = navController,
-        startDestination = SeChatRoutes.IDENTITY
+        startDestination = SeChatRoutes.IDENTITY,
     ) {
         composable(SeChatRoutes.IDENTITY) {
             IdentityScreen(
                 onNavigateToContacts = { navController.navigate(SeChatRoutes.CONTACTS) },
-                onNavigateToScanner = { navController.navigate(SeChatRoutes.SCANNER) }
+                onNavigateToScanner = { navController.navigate(SeChatRoutes.SCANNER) },
             )
         }
 
@@ -39,7 +39,7 @@ fun SeChatNavHost() {
                     navController.popBackStack()
                     navController.navigate(SeChatRoutes.chatRoute(contactId.toString()))
                 },
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
             )
         }
 
@@ -47,7 +47,7 @@ fun SeChatNavHost() {
             ContactsScreen(
                 onContactSelected = { contactId ->
                     navController.navigate(SeChatRoutes.chatRoute(contactId))
-                }
+                },
             )
         }
 
@@ -55,7 +55,7 @@ fun SeChatNavHost() {
             val contactId = backStackEntry.arguments?.getString("contactId") ?: return@composable
             ChatScreen(
                 contactId = contactId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
             )
         }
     }

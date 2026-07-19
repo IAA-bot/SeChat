@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "messages",
-    indices = [Index("session_id")]
+    indices = [Index("session_id")],
 )
 data class MessageEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -17,7 +17,7 @@ data class MessageEntity(
     @ColumnInfo(name = "timestamp") val timestamp: Long = System.currentTimeMillis(),
     @ColumnInfo(name = "is_read") val isRead: Boolean = false,
     @ColumnInfo(name = "is_sent") val isSent: Boolean = false,
-    @ColumnInfo(name = "is_ephemeral") val isEphemeral: Boolean = false
+    @ColumnInfo(name = "is_ephemeral") val isEphemeral: Boolean = false,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

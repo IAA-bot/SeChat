@@ -6,16 +6,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 enum class TransportMode { TCP_LAN, WEBRTC, TOR }
+
 enum class TransportState { DISCONNECTED, LISTENING, CONNECTING, CONNECTED, FAILED }
 
 class TransportManager(
     private val context: Context,
     private val tcpManager: ConnectionManager,
     private val webRTCManager: WebRTCManager,
-    val torManager: TorProxyManager
+    val torManager: TorProxyManager,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -24,11 +24,12 @@ class TransportManager(
     private val _state = MutableStateFlow(TransportState.DISCONNECTED)
     val state = _state.asStateFlow()
 
-    val incomingMessages get() = when (currentMode) {
-        TransportMode.TCP_LAN -> tcpManager.incomingMessages
-        TransportMode.WEBRTC -> webRTCManager.incomingMessages
-        TransportMode.TOR -> tcpManager.incomingMessages
-    }
+    val incomingMessages get() =
+        when (currentMode) {
+            TransportMode.TCP_LAN -> tcpManager.incomingMessages
+            TransportMode.WEBRTC -> webRTCManager.incomingMessages
+            TransportMode.TOR -> tcpManager.incomingMessages
+        }
 
     fun switchMode(mode: TransportMode) {
         disconnect()
@@ -49,7 +50,11 @@ class TransportManager(
         }
     }
 
-    suspend fun connect(peerId: String, host: String, port: Int): Boolean {
+    suspend fun connect(
+        peerId: String,
+        host: String,
+        port: Int,
+    ): Boolean {
         return when (currentMode) {
             TransportMode.TCP_LAN -> tcpManager.connect(peerId, host, port)
             TransportMode.WEBRTC -> {
@@ -63,7 +68,10 @@ class TransportManager(
         }
     }
 
-    suspend fun send(peerId: String, message: WireMessage): Boolean {
+    suspend fun send(
+        peerId: String,
+        message: WireMessage,
+    ): Boolean {
         return when (currentMode) {
             TransportMode.TCP_LAN, TransportMode.TOR -> tcpManager.send(peerId, message)
             TransportMode.WEBRTC -> webRTCManager.send(message)

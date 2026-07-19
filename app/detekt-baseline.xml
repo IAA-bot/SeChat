@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>FunctionNaming:SeChatNavHost.kt$@Composable fun SeChatNavHost()</ID>
+    <ID>FunctionNaming:SeChatTheme.kt$@Composable fun SeChatTheme(content: @Composable () -&gt; Unit)</ID>
+    <ID>InvalidPackageDeclaration:AppModule.kt$package com.sechat.app</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF000000</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF007AFF</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF4CAF50</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF666666</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFF999999</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFFF44336</ID>
+    <ID>MagicNumber:SeChatTheme.kt$0xFFF5F5F5</ID>
+    <ID>MatchingDeclarationName:SeChatNavHost.kt$SeChatRoutes</ID>
+    <ID>TooGenericExceptionCaught:SeChatApplication.kt$SeChatApplication$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

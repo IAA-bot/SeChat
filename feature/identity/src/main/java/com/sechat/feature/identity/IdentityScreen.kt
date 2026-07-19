@@ -47,6 +47,7 @@ import com.sechat.core.crypto.IdentityManager
 import com.sechat.core.crypto.QrCodeEncoder
 import com.sechat.core.p2p.ConnectionManager
 import com.sechat.core.p2p.ConnectionState
+import com.sechat.core.p2p.ServiceManager
 import org.koin.java.KoinJavaComponent.get
 
 @Composable
@@ -62,12 +63,20 @@ fun IdentityScreen(
     )
 
     var state by remember { mutableStateOf<IdentityUiState>(IdentityUiState.Loading) }
+    val serviceManager = remember { get<ServiceManager>(ServiceManager::class.java) }
 
     val cameraLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
         ) { granted ->
             if (granted) onNavigateToScanner()
+        }
+
+    val notifLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            if (granted) serviceManager.startBackgroundService()
         }
 
     LaunchedEffect(Unit) {
@@ -85,6 +94,7 @@ fun IdentityScreen(
                         fingerprint = identity.fingerprint,
                         qrBitmap = qrBitmap,
                     )
+                serviceManager.startBackgroundService()
             } else {
                 state = IdentityUiState.NotCreated
             }
@@ -142,6 +152,11 @@ fun IdentityScreen(
                                 fingerprint = identity.fingerprint,
                                 qrBitmap = qrBitmap,
                             )
+                        if (android.os.Build.VERSION.SDK_INT >= 33) {
+                            notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            serviceManager.startBackgroundService()
+                        }
                     } catch (e: Exception) {
                         state = IdentityUiState.Error(e.message ?: "Failed to create identity")
                     }

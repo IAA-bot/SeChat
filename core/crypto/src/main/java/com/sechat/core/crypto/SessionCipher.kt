@@ -11,47 +11,51 @@ import javax.crypto.spec.SecretKeySpec
 
 class SessionCipher {
 
-    fun createSenderSession(localKeyPair: KeyPair, remotePublicKey: PublicKey): Session {
-        val sharedSecret = ecdh(localKeyPair, remotePublicKey)
-        val chainKey = hkdf(sharedSecret, "SeChat.SenderChain")
-        return Session(chainKey, localKeyPair, remotePublicKey)
-    }
-
-    fun createReceiverSession(localKeyPair: KeyPair, remotePublicKey: PublicKey): Session {
-        val sharedSecret = ecdh(localKeyPair, remotePublicKey)
-        val chainKey = hkdf(sharedSecret, "SeChat.ReceiverChain")
-        return Session(chainKey, localKeyPair, remotePublicKey)
-    }
-
     data class Session(
-        val chainKey: ByteArray,
+        val sharedSecret: ByteArray,
         val localKeyPair: KeyPair,
         val remotePublicKey: PublicKey
     ) {
-        fun encrypt(plaintext: ByteArray): EncryptedMessage {
-            val messageKey = hkdf(chainKey, "SeChat.MessageKey")
+        private var sendCounter: Long = 0
+        private var recvCounter: Long = 0
+
+        fun encrypt(plaintext: ByteArray): CipherText {
+            val key = deriveKey(sharedSecret, sendCounter)
             val cipher = Cipher.getInstance(AES_GCM_NO_PADDING)
             val iv = ByteArray(GCM_IV_LENGTH).also {
                 java.security.SecureRandom().nextBytes(it)
             }
-            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(messageKey, "AES"), GCMParameterSpec(GCM_TAG_LENGTH * 8, iv))
+            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(GCM_TAG_LENGTH * 8, iv))
             val ciphertext = cipher.doFinal(plaintext)
-            return EncryptedMessage(iv, ciphertext, chainKey)
+            sendCounter++
+            return CipherText(ciphertext, iv, sendCounter - 1)
         }
 
-        fun decrypt(encrypted: EncryptedMessage): ByteArray {
-            val messageKey = hkdf(encrypted.chainKeyUsed, "SeChat.MessageKey")
+        fun decrypt(ciphertext: ByteArray, iv: ByteArray, counter: Long): ByteArray {
+            val key = deriveKey(sharedSecret, counter)
             val cipher = Cipher.getInstance(AES_GCM_NO_PADDING)
-            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(messageKey, "AES"), GCMParameterSpec(GCM_TAG_LENGTH * 8, encrypted.iv))
-            return cipher.doFinal(encrypted.ciphertext)
+            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(GCM_TAG_LENGTH * 8, iv))
+            val plaintext = cipher.doFinal(ciphertext)
+            recvCounter = maxOf(recvCounter, counter + 1)
+            return plaintext
         }
     }
 
-    data class EncryptedMessage(
-        val iv: ByteArray,
+    data class CipherText(
         val ciphertext: ByteArray,
-        val chainKeyUsed: ByteArray
+        val iv: ByteArray,
+        val messageCounter: Long
     )
+
+    fun createSenderSession(localKeyPair: KeyPair, remotePublicKey: PublicKey): Session {
+        val sharedSecret = ecdh(localKeyPair, remotePublicKey)
+        return Session(sharedSecret, localKeyPair, remotePublicKey)
+    }
+
+    fun createReceiverSession(localKeyPair: KeyPair, remotePublicKey: PublicKey): Session {
+        val sharedSecret = ecdh(localKeyPair, remotePublicKey)
+        return Session(sharedSecret, localKeyPair, remotePublicKey)
+    }
 
     private fun ecdh(keyPair: KeyPair, publicKey: PublicKey): ByteArray {
         val ka = KeyAgreement.getInstance("ECDH")
@@ -65,15 +69,19 @@ class SessionCipher {
         const val GCM_IV_LENGTH = 12
         const val GCM_TAG_LENGTH = 16
 
-        fun hkdf(input: ByteArray, info: String): ByteArray {
-            val mac = javax.crypto.Mac.getInstance("HmacSHA256")
-            val salt = "SeChat2024".toByteArray()
-            mac.init(javax.crypto.spec.SecretKeySpec(salt, "HmacSHA256"))
-            val prk = mac.doFinal(input)
-            mac.init(javax.crypto.spec.SecretKeySpec(prk, "HmacSHA256"))
-            mac.update(info.toByteArray())
-            mac.update(1)
-            return mac.doFinal().copyOf(32)
+        fun deriveKey(sharedSecret: ByteArray, counter: Long): ByteArray {
+            val input = sharedSecret + longToBytes(counter)
+            val digest = MessageDigest.getInstance("SHA-256")
+            return digest.digest(input).copyOf(16)
+        }
+
+        private fun longToBytes(value: Long): ByteArray {
+            return byteArrayOf(
+                (value shr 56).toByte(), (value shr 48).toByte(),
+                (value shr 40).toByte(), (value shr 32).toByte(),
+                (value shr 24).toByte(), (value shr 16).toByte(),
+                (value shr 8).toByte(), value.toByte()
+            )
         }
     }
 }

@@ -62,24 +62,14 @@ fun IdentityScreen(
     )
 
     var state by remember { mutableStateOf<IdentityUiState>(IdentityUiState.Loading) }
-    var cameraGranted by remember { mutableStateOf(false) }
-    var pendingScan by remember { mutableStateOf(false) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
-        cameraGranted = granted
-        if (granted && pendingScan) {
-            onNavigateToScanner()
-            pendingScan = false
-        }
+        if (granted) onNavigateToScanner()
     }
 
     LaunchedEffect(Unit) {
-        cameraGranted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-
         try {
             val identity = identityManager.getKeyPair()
             if (identity != null) {
@@ -215,10 +205,12 @@ fun IdentityScreen(
                     }
                     OutlinedButton(
                         onClick = {
-                            if (cameraGranted) {
+                            val hasCamera = ContextCompat.checkSelfPermission(
+                                context, Manifest.permission.CAMERA
+                            ) == PackageManager.PERMISSION_GRANTED
+                            if (hasCamera) {
                                 onNavigateToScanner()
                             } else {
-                                pendingScan = true
                                 cameraLauncher.launch(Manifest.permission.CAMERA)
                             }
                         },

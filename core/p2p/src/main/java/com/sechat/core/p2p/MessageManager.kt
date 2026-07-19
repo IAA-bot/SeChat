@@ -2,11 +2,16 @@ package com.sechat.core.p2p
 
 import com.sechat.core.crypto.IdentityManager
 import com.sechat.core.crypto.SessionCipher
+import com.sechat.core.data.MessageRepository
+import com.sechat.core.data.StoredMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -25,16 +30,31 @@ data class ChatMessage(
     val isEncrypted: Boolean = true
 )
 
+fun StoredMessage.toChatMessage(): ChatMessage = ChatMessage(
+    id = "${sessionId}-$id",
+    senderId = sender,
+    text = "\uD83D\uDD12 Encrypted message",
+    timestamp = timestamp,
+    isSent = isSent,
+    isEncrypted = true
+)
+
 class MessageManager(
     private val connectionManager: ConnectionManager,
     private val sessionCipher: SessionCipher,
-    private val identityManager: IdentityManager
+    private val identityManager: IdentityManager,
+    private val messageRepository: MessageRepository
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val sessions = mutableMapOf<String, SessionCipher.Session>()
+    private val liveMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
 
-    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
-    val messages = _messages.asStateFlow()
+    val messages: StateFlow<List<ChatMessage>> = combine(
+        messageRepository.allStoredMessages(),
+        liveMessages
+    ) { stored, live ->
+        stored.map { it.toChatMessage() } + live
+    }.stateIn(scope, SharingStarted.Lazily, emptyList())
 
     fun startListening() {
         scope.launch {
@@ -46,12 +66,7 @@ class MessageManager(
                             sessions[msg.senderId] = session
                         }
                     }
-                    MessageType.CIPHERTEXT -> {
-                        val decrypted = decryptMessage(msg)
-                        if (decrypted != null) {
-                            _messages.value = _messages.value + decrypted
-                        }
-                    }
+                    MessageType.CIPHERTEXT -> decryptAndSave(msg)
                     else -> { }
                 }
             }
@@ -62,32 +77,29 @@ class MessageManager(
         val identity = identityManager.getKeyPair() ?: return
         val session = sessionCipher.createSenderSession(identity.keyPair, remotePublicKey)
         sessions[peerId] = session
-
         scope.launch {
             connectionManager.send(
-                peerId,
-                WireMessage(MessageType.SESSION_SETUP, peerId, identity.publicKeyRaw)
+                peerId, WireMessage(MessageType.SESSION_SETUP, peerId, identity.publicKeyRaw)
             )
         }
     }
 
     fun sendMessage(peerId: String, text: String) {
         val session = sessions[peerId] ?: return
+        val identity = identityManager.getKeyPair() ?: return
         val encrypted = session.encrypt(text.toByteArray(Charsets.UTF_8))
-        val payload = serializeCipherPayload(encrypted)
-
+        val payload = serializePayload(encrypted)
         scope.launch {
             val sent = connectionManager.send(
-                peerId,
-                WireMessage(MessageType.CIPHERTEXT, peerId, payload)
+                peerId, WireMessage(MessageType.CIPHERTEXT, peerId, payload)
             )
             if (sent) {
-                _messages.value = _messages.value + ChatMessage(
-                    id = "${peerId}-send-${System.currentTimeMillis()}",
-                    senderId = peerId,
-                    text = text,
-                    timestamp = System.currentTimeMillis(),
-                    isSent = true
+                messageRepository.saveMessage(peerId, identity.fingerprint, encrypted.ciphertext, true)
+            } else {
+                liveMessages.value = liveMessages.value + ChatMessage(
+                    id = "${peerId}-fail-${System.currentTimeMillis()}",
+                    senderId = peerId, text = text,
+                    timestamp = System.currentTimeMillis(), isSent = true
                 )
             }
         }
@@ -96,47 +108,41 @@ class MessageManager(
     private fun buildReceiverSession(msg: WireMessage): SessionCipher.Session? {
         val identity = identityManager.getKeyPair() ?: return null
         return try {
-            val keyFactory = KeyFactory.getInstance("EC")
-            val remotePublicKey = keyFactory.generatePublic(X509EncodedKeySpec(msg.payload))
-            sessionCipher.createReceiverSession(identity.keyPair, remotePublicKey)
+            val kf = KeyFactory.getInstance("EC")
+            val remote = kf.generatePublic(X509EncodedKeySpec(msg.payload))
+            sessionCipher.createReceiverSession(identity.keyPair, remote)
         } catch (_: Exception) { null }
     }
 
-    private fun decryptMessage(msg: WireMessage): ChatMessage? {
-        val session = sessions[msg.senderId] ?: return null
-        return try {
-            val (ciphertext, iv, counter) = deserializeCipherPayload(msg.payload)
-            val plaintext = session.decrypt(ciphertext, iv, counter)
-            ChatMessage(
-                id = "${msg.senderId}-${counter}",
-                senderId = msg.senderId,
-                text = String(plaintext, Charsets.UTF_8),
-                timestamp = System.currentTimeMillis(),
-                isSent = false
+    private fun decryptAndSave(msg: WireMessage) {
+        val session = sessions[msg.senderId] ?: return
+        try {
+            val (ct, iv, counter) = deserializePayload(msg.payload)
+            val text = String(session.decrypt(ct, iv, counter), Charsets.UTF_8)
+            liveMessages.value = liveMessages.value + ChatMessage(
+                id = "${msg.senderId}-$counter",
+                senderId = msg.senderId, text = text,
+                timestamp = System.currentTimeMillis(), isSent = false
             )
-        } catch (_: Exception) { null }
+        } catch (_: Exception) { }
     }
 
-    private fun serializeCipherPayload(ct: SessionCipher.CipherText): ByteArray {
+    private fun serializePayload(ct: SessionCipher.CipherText): ByteArray {
         val baos = ByteArrayOutputStream()
         DataOutputStream(baos).use { dos ->
             dos.writeLong(ct.messageCounter)
-            dos.writeInt(ct.iv.size)
-            dos.write(ct.iv)
-            dos.writeInt(ct.ciphertext.size)
-            dos.write(ct.ciphertext)
+            dos.writeInt(ct.iv.size); dos.write(ct.iv)
+            dos.writeInt(ct.ciphertext.size); dos.write(ct.ciphertext)
         }
         return baos.toByteArray()
     }
 
-    private fun deserializeCipherPayload(data: ByteArray): Triple<ByteArray, ByteArray, Long> {
+    private fun deserializePayload(data: ByteArray): Triple<ByteArray, ByteArray, Long> {
         val bais = ByteArrayInputStream(data)
         DataInputStream(bais).use { dis ->
             val counter = dis.readLong()
-            val ivSize = dis.readInt()
-            val iv = ByteArray(ivSize).apply { dis.readFully(this) }
-            val ctSize = dis.readInt()
-            val ct = ByteArray(ctSize).apply { dis.readFully(this) }
+            val iv = ByteArray(dis.readInt()).apply { dis.readFully(this) }
+            val ct = ByteArray(dis.readInt()).apply { dis.readFully(this) }
             return Triple(ct, iv, counter)
         }
     }

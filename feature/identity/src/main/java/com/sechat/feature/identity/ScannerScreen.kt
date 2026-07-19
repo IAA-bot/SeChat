@@ -1,7 +1,6 @@
 package com.sechat.feature.identity
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.util.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,10 +11,8 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,28 +27,38 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.sechat.core.crypto.QrCodeDecoder
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.MultiFormatReader
-import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.RGBLuminanceSource
+import com.google.zxing.common.HybridBinarizer
+import com.sechat.core.crypto.IdentityManager
+import com.sechat.core.crypto.QrCodeDecoder
+import com.sechat.core.data.ContactRepository
+import kotlinx.coroutines.launch
+import org.koin.java.KoinJavaComponent.get
 import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScannerScreen(
-    onPeerScanned: (publicKeyHex: String, fingerprint: String) -> Unit,
+    onPeerScanned: (contactId: Long) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val contactRepo = remember { get<ContactRepository>(ContactRepository::class.java) }
+    val identityManager = remember { get<IdentityManager>(IdentityManager::class.java) }
+    var scanning by remember { mutableStateOf(true) }
+
     var cameraGranted by remember {
         mutableStateOf(
             PermissionChecker.checkSelfPermission(context, Manifest.permission.CAMERA)
@@ -81,17 +88,26 @@ fun ScannerScreen(
         }
     ) { padding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize().padding(padding),
             contentAlignment = Alignment.Center
         ) {
             if (cameraGranted) {
                 CameraPreview(
                     onQrDetected = { rawText ->
+                        if (!scanning) return@CameraPreview
+                        scanning = false
+
                         val decoded = QrCodeDecoder.decode(rawText)
                         if (decoded != null) {
-                            onPeerScanned(decoded.publicKeyHex, decoded.fingerprint)
+                            scope.launch {
+                                val displayName = decoded.fingerprint.take(8)
+                                val hexBytes = decoded.publicKeyHex.chunked(2)
+                                    .map { it.toInt(16).toByte() }.toByteArray()
+                                val id = contactRepo.addContact(displayName, hexBytes)
+                                onPeerScanned(id)
+                            }
+                        } else {
+                            scanning = true
                         }
                     }
                 )
@@ -107,10 +123,9 @@ fun ScannerScreen(
 }
 
 @Composable
-private fun CameraPreview(
-    onQrDetected: (String) -> Unit
-) {
+private fun CameraPreview(onQrDetected: (String) -> Unit) {
     val context = LocalContext.current
+    val lifecycleOwner = context as? androidx.lifecycle.LifecycleOwner ?: return
     val executor = remember { Executors.newSingleThreadExecutor() }
 
     AndroidView(
@@ -118,74 +133,53 @@ private fun CameraPreview(
             val previewView = PreviewView(ctx).apply {
                 scaleType = PreviewView.ScaleType.FILL_CENTER
             }
-
             val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
             cameraProviderFuture.addListener({
                 val cameraProvider = cameraProviderFuture.get()
                 val preview = Preview.Builder().build()
                 preview.setSurfaceProvider(previewView.surfaceProvider)
 
-                val imageAnalysis = ImageAnalysis.Builder()
+                val analysis = ImageAnalysis.Builder()
                     .setTargetResolution(Size(1280, 720))
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
 
-                imageAnalysis.setAnalyzer(executor) { image ->
-                    scanQrCode(image)?.let { text ->
-                        onQrDetected(text)
-                    }
+                analysis.setAnalyzer(executor) { image ->
+                    scanQrCode(image)?.let(onQrDetected)
                 }
 
                 try {
                     cameraProvider.unbindAll()
                     cameraProvider.bindToLifecycle(
-                        ctx as androidx.lifecycle.LifecycleOwner,
-                        CameraSelector.DEFAULT_BACK_CAMERA,
-                        preview,
-                        imageAnalysis
+                        lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA,
+                        preview, analysis
                     )
                 } catch (_: Exception) { }
             }, ContextCompat.getMainExecutor(ctx))
-
             previewView
         },
         modifier = Modifier.fillMaxSize()
     )
 
-    DisposableEffect(Unit) {
-        onDispose { executor.shutdown() }
-    }
+    DisposableEffect(Unit) { onDispose { executor.shutdown() } }
 }
 
-private fun scanQrCode(imageProxy: ImageProxy): String? {
-    val buffer: ByteBuffer = imageProxy.planes[0].buffer
-    val bytes = ByteArray(buffer.remaining())
-    buffer.get(bytes)
-
-    val bitmap = convertYuvToRgb(bytes, imageProxy.width, imageProxy.height)
-
-    val source = RGBLuminanceSource(imageProxy.width, imageProxy.height, bitmap)
-    val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
-
-    return try {
-        val result = MultiFormatReader().decode(binaryBitmap)
-        imageProxy.close()
-        result.text
-    } catch (_: Exception) {
-        imageProxy.close()
-        null
-    }
-}
-
-private fun convertYuvToRgb(yuv: ByteArray, width: Int, height: Int): IntArray {
-    val rgb = IntArray(width * height)
-    for (y in 0 until height) {
-        for (x in 0 until width) {
-            val index = y * width + x
-            val yVal = yuv[index].toInt() and 0xFF
-            val gray = if (yVal < 0) 0 else if (yVal > 255) 255 else yVal
-            rgb[index] = (0xFF shl 24) or (gray shl 16) or (gray shl 8) or gray
+private fun scanQrCode(image: ImageProxy): String? {
+    val buffer = image.planes[0].buffer
+    val bytes = ByteArray(buffer.remaining()).also { buffer.get(it) }
+    val rgb = IntArray(image.width * image.height)
+    for (y in 0 until image.height) {
+        for (x in 0 until image.width) {
+            val gray = bytes[y * image.width + x].toInt() and 0xFF
+            rgb[y * image.width + x] = (0xFF shl 24) or (gray shl 16) or (gray shl 8) or gray
         }
     }
-    return rgb
+    return try {
+        val result = MultiFormatReader().decode(
+            BinaryBitmap(HybridBinarizer(RGBLuminanceSource(image.width, image.height, rgb)))
+        )
+        image.close(); result.text
+    } catch (_: Exception) {
+        image.close(); null
+    }
 }

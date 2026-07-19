@@ -33,6 +33,7 @@ android {
 
 dependencies {
     implementation(project(":core:crypto"))
+    implementation(project(":core:data"))
     implementation(project(":core:p2p"))
 
     implementation(platform("androidx.compose:compose-bom:2024.01.00"))

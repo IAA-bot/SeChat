@@ -35,9 +35,9 @@ fun SeChatNavHost() {
 
         composable(SeChatRoutes.SCANNER) {
             ScannerScreen(
-                onPeerScanned = { publicKeyHex, fingerprint ->
+                onPeerScanned = { contactId ->
                     navController.popBackStack()
-                    navController.navigate(SeChatRoutes.CONTACTS)
+                    navController.navigate(SeChatRoutes.chatRoute(contactId.toString()))
                 },
                 onNavigateBack = { navController.popBackStack() }
             )

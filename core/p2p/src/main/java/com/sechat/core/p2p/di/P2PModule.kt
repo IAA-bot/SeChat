@@ -12,7 +12,8 @@ val p2pModule = module {
         MessageManager(
             connectionManager = get(),
             sessionCipher = get(),
-            identityManager = get()
+            identityManager = get(),
+            messageRepository = get()
         )
     }
 }

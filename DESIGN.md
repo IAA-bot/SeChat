@@ -16,6 +16,16 @@ No tracking, no accounts, no servers.
 | Text Primary | `#000000` | Primary content |
 | Text Secondary | `#666666` | Secondary information |
 | Text Hint | `#999999` | Placeholders, metadata |
+| Background (Dark) | `#121212` | Dark mode page backgrounds |
+| Surface (Dark) | `#1E1E1E` | Dark mode card backgrounds |
+| Text Primary (Dark) | `#E0E0E0` | Dark mode primary content |
+| Primary (Dark) | `#0A84FF` | Dark mode accent |
+
+## Theme
+
+- Light: default Material3 light scheme
+- Dark: auto-detects system dark mode (`isSystemInDarkTheme()`)
+- All interactive states (loading/empty/error/success) follow theme
 
 ## Typography
 

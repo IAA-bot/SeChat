@@ -5,6 +5,15 @@ plugins {
 
 android {
     namespace = "com.sechat.app"
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("sechat-release.jks")
+            storePassword = "REDACTED"
+            keyAlias = "sechat"
+            keyPassword = "REDACTED"
+        }
+    }
     compileSdk = 34
 
     defaultConfig {
@@ -36,12 +45,17 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
         }
         debug {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 

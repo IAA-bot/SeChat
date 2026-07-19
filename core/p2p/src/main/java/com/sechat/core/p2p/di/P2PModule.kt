@@ -13,7 +13,7 @@ import org.koin.dsl.module
 
 val p2pModule = module {
     single { ConnectionManager() }
-    single { WebRTCManager() }
+    single { WebRTCManager(androidContext()) }
     single { TorProxyManager(androidContext()) }
     single {
         TransportManager(

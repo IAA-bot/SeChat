@@ -31,8 +31,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // WebRTC: add org.webrtc:google-webrtc when available
-    // Tor: add info.guardianproject.netcipher:netcipher when available
+    implementation("com.infobip:google-webrtc:1.0.35529")
+    implementation("info.guardianproject.netcipher:netcipher:2.1.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

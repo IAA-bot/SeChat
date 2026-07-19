@@ -8,10 +8,11 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("sechat-release.jks")
-            storePassword = "REDACTED"
-            keyAlias = "sechat"
-            keyPassword = "REDACTED"
+            val keystorePath = System.getenv("KEYSTORE_PATH") ?: return@create
+            storeFile = file(keystorePath)
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: return@create
+            keyAlias = System.getenv("KEY_ALIAS") ?: return@create
+            keyPassword = System.getenv("KEY_PASSWORD") ?: return@create
         }
     }
     compileSdk = 34
@@ -45,7 +46,9 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (System.getenv("KEYSTORE_PATH") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

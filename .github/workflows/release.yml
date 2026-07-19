@@ -21,20 +21,23 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Restore release keystore
+        id: keystore
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > /tmp/sechat-release.jks
+            echo "KEYSTORE_PATH=/tmp/sechat-release.jks" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+            echo "signed=true" >> $GITHUB_OUTPUT
+          else
+            echo "No keystore secrets found — building unsigned APK"
+            echo "signed=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build release APK
         run: ./gradlew assembleRelease
-
-      - name: Sign APK
-        run: |
-          echo "Signing APK with release keystore..."
-          # Keystore should be stored as GitHub Secrets:
-          # KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
-          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
-            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > /tmp/keystore.jks
-            cp /tmp/keystore.jsk app/sechat-release.jks 2>/dev/null || true
-            # Rebuild with signing
-            ./gradlew assembleRelease
-          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -43,4 +46,4 @@ jobs:
           body_path: CHANGELOG.md
           files: |
             app/build/outputs/apk/release/app-arm64-v8a-release.apk
-            app/build/outputs/apk/release/app-armeabi-v7a-release.apk
+          fail_on_unmatched_files: false

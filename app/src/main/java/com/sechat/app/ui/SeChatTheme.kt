@@ -23,8 +23,8 @@ internal val DarkBackground = Color(0xFF121212)
 internal val DarkSurface = Color(0xFF1E1E1E)
 internal val DarkSurfaceVariant = Color(0xFF2C2C2C)
 internal val DarkTextPrimary = Color(0xFFE0E0E0)
-internal val DarkTextSecondary = Color(0xFFAAAAAA)
-internal val DarkTextHint = Color(0xFF777777)
+internal val DarkTextSecondary = Color(0xFFBBBBBB)
+internal val DarkTextHint = Color(0xFF999999)
 
 private val LightColorScheme =
     lightColorScheme(

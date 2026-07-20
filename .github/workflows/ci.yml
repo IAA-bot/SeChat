@@ -22,20 +22,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Auto-format (ktlint)
-        run: ./gradlew ktlintFormat
-
       - name: Format check (ktlint)
-        run: ./gradlew ktlintCheck
+        run: ./gradlew ktlintCheck --build-cache --parallel
 
-      - name: Static analysis (detekt)
-        run: ./gradlew detekt
+      - name: Static analysis (detekt + lint)
+        run: |
+          ./gradlew detekt lint --build-cache --parallel
 
-      - name: Android lint
-        run: ./gradlew lint
-
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
-
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
+      - name: Build + test
+        run: |
+          ./gradlew assembleDebug testDebugUnitTest --build-cache --parallel

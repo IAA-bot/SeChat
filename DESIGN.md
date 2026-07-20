@@ -19,6 +19,8 @@ No tracking, no accounts, no servers.
 | Background (Dark) | `#121212` | Dark mode page backgrounds |
 | Surface (Dark) | `#1E1E1E` | Dark mode card backgrounds |
 | Text Primary (Dark) | `#E0E0E0` | Dark mode primary content |
+| Text Secondary (Dark) | `#BBBBBB` | Dark mode secondary info |
+| Text Hint (Dark) | `#999999` | Dark mode placeholders, metadata |
 | Primary (Dark) | `#0A84FF` | Dark mode accent |
 
 ## Theme
